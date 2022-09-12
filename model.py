@@ -22,7 +22,7 @@ class Encoder(nn.Module):
                             batch_first=True,
                             dropout=self.dropout,
                             bidirectional=True)
-        self.dropout = nn.Dropout(self.dropout)
+        self.dropout_layer = nn.Dropout(self.dropout)
 
 
     def init_hidden(self):
@@ -35,7 +35,7 @@ class Encoder(nn.Module):
         h0 = self.init_hidden()
 
         x = self.embedding(x)
-        x = self.dropout(x)
+        x = self.dropout_layer(x)
         x, hn = self.gru(x, h0)
         hn = hn.view(2, -1, self.batch_size, self.hidden_size)
         hn = torch.sum(hn, dim=0)
@@ -63,7 +63,7 @@ class Decoder(nn.Module):
                             num_layers=self.num_layers,
                             batch_first=True,
                             dropout=self.dropout)
-        self.dropout = nn.Dropout(self.dropout)
+        self.dropout_layer = nn.Dropout(self.dropout)
         self.relu = nn.ReLU()
         self.fc = nn.Linear(self.hidden_size, self.vocab_size)
 
@@ -76,7 +76,7 @@ class Decoder(nn.Module):
         if self.is_attn:
             enc_output, score = self.attention(self.relu(enc_output), self.relu(hidden[-1]), mask)
             x = torch.cat((x, enc_output.unsqueeze(1)), dim=-1)
-        x = self.dropout(x)
+        x = self.dropout_layer(x)
         x, hn = self.gru(x, hidden)
         x = self.fc(self.relu(x))
         return x, hn, score
