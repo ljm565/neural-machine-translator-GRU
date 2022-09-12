@@ -139,9 +139,9 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
             pred: repondez a toutes les questions , s'il vous plait .
 
             ```
-            <img src="images/nmt_GRU_Attn_attention0.jpg" width="31%">
-            <img src="images/nmt_GRU_Attn_attention1.jpg" width="31%">
-            <img src="images/nmt_GRU_Attn_attention2.jpg" width="31%"><br><br><br>
+            <img src="images/nmt_GRU_Attn_attention0.jpg" width="32%">
+            <img src="images/nmt_GRU_Attn_attention1.jpg" width="32%">
+            <img src="images/nmt_GRU_Attn_attention2.jpg" width="32%"><br><br><br>
 
         * Scheduled Sampling Model with Attention
             ```
@@ -163,9 +163,9 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
             pred: nous nous faut que tes conseils .
 
             ```
-            <img src="images/nmt_GRU_Attn_ss_attention0.jpg" width="31%">
-            <img src="images/nmt_GRU_Attn_ss_attention1.jpg" width="31%">
-            <img src="images/nmt_GRU_Attn_ss_attention2.jpg" width="31%"><br><br><br>
+            <img src="images/nmt_GRU_Attn_ss_attention0.jpg" width="32%">
+            <img src="images/nmt_GRU_Attn_ss_attention1.jpg" width="32%">
+            <img src="images/nmt_GRU_Attn_ss_attention2.jpg" width="32%"><br><br><br>
 
         * Model without Attention
             ```
