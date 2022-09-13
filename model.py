@@ -111,7 +111,7 @@ class Attention(nn.Module):
         score = F.softmax(score, dim=1)
         
         enc_output = torch.permute(enc_output, (0, 2, 1))
-        enc_output = torch.bmm(enc_output, score).squeeze()
+        enc_output = torch.bmm(enc_output, score).squeeze(-1)
         return enc_output, score
 
 

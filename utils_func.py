@@ -110,3 +110,11 @@ def visualize_attn(score, src, trg, pred, tokenizers, result_num, save_path):
         plt.savefig(save_path + '_attention' + str(num)+'.jpg')
 
     print_samples(src, trg, pred, tokenizers, result_num, ids)
+
+
+def make_inference_data(query, tokenizer, max_len):
+    query = [tokenizer.sos_token_id] + tokenizer.encode(preprocessing(query)) + [tokenizer.eos_token_id]
+    mask = torch.zeros(max_len)
+    mask[:len(query)] = 1
+    query = query + [tokenizer.pad_token_id] * (max_len - len(query))
+    return torch.LongTensor(query).unsqueeze(0), mask.unsqueeze(0)

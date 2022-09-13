@@ -13,7 +13,7 @@ def main(config_path:Config, args:ArgumentParser):
     device = torch.device('cuda:0') if args.device == 'gpu' else torch.device('cpu')
     print('Using {}'.format(device))
 
-    if (args.cont and args.mode == 'train') or args.mode == 'test':
+    if (args.cont and args.mode == 'train') or args.mode != 'train':
         try:
             config = Config(config_path)
             config = Config(config.base_path + '/model/' + args.name + '/' + args.name + '.json')
@@ -74,6 +74,18 @@ def main(config_path:Config, args:ArgumentParser):
         os.makedirs(base_path+'result', exist_ok=True)
         trainer.test(config.result_num, args.name)
     
+    elif args.mode == 'inference':
+        print('inference starting...\n')
+        while 1:
+            query = input('Input English: ')
+            if query == 'exit':
+                break
+            output = trainer.inference(query)
+            print(output, '\n')
+        
+    else:
+        print("Please select mode among 'train', 'test', and 'inference'")
+        raise AssertionError
 
 
 
@@ -83,7 +95,7 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-d', '--device', type=str, required=True, choices=['cpu', 'gpu'])
-    parser.add_argument('-m', '--mode', type=str, required=True, choices=['train', 'test'])
+    parser.add_argument('-m', '--mode', type=str, required=True, choices=['train', 'test', 'inference'])
     parser.add_argument('-c', '--cont', type=int, default=0, required=False)
     parser.add_argument('-n', '--name', type=str, required=False)
     args = parser.parse_args()

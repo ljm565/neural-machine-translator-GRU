@@ -70,7 +70,7 @@ class Trainer:
                 self.dec_optimizer.load_state_dict(self.check_point['optimizer']['decoder'])
                 del self.check_point
                 torch.cuda.empty_cache()
-        elif self.mode == 'test':
+        elif self.mode == 'test' or self.mode == 'inference':
             self.check_point = torch.load(self.model_path, map_location=self.device)
             self.encoder.load_state_dict(self.check_point['model']['encoder'])
             self.decoder.load_state_dict(self.check_point['model']['decoder'])
@@ -245,3 +245,31 @@ class Trainer:
         else:
             ids = random.sample(list(range(all_val_trg.size(0))), result_num)
             print_samples(all_val_src, all_val_trg, all_val_output, self.tokenizers, result_num, ids)
+
+    
+    def inference(self, query):
+        query, mask = make_inference_data(query, self.tokenizers[0], self.max_len)
+
+        with torch.no_grad():
+            query = query.to(self.device)
+            if self.config.is_attn:
+                mask = mask.to(self.device)
+            self.encoder.eval()
+            self.decoder.eval()
+
+            enc_output, hidden = self.encoder(query)
+            decoder_all_output, decoder_sos = [], torch.LongTensor([[self.tokenizers[1].sos_token_id]]).to(self.device)
+            for j in range(self.max_len):
+                if j == 0:
+                    dec_output, hidden, _ = self.decoder(decoder_sos, hidden, enc_output, mask)
+                    decoder_all_output.append(dec_output)
+                else:
+                    trg_word = torch.argmax(dec_output, dim=-1)
+                    dec_output, hidden, _ = self.decoder(trg_word.detach(), hidden, enc_output, mask)
+                    decoder_all_output.append(dec_output)
+            decoder_all_output = torch.cat(decoder_all_output, dim=1)
+            output = self.tokenizers[1].decode(torch.argmax(decoder_all_output.detach().cpu(), dim=-1)[0].tolist())
+        
+        if output.split()[-1] == self.tokenizers[1].eos_token:
+            return ' '.join(output.split()[:-1])
+        return output       
