@@ -44,7 +44,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, config:Config, tokenizer, device):
+    def __init__(self, config:Config, tokenizer):
         super(Decoder, self).__init__()
         self.pad_token_id = tokenizer.pad_token_id
         self.vocab_size = tokenizer.vocab_size
@@ -52,7 +52,6 @@ class Decoder(nn.Module):
         self.num_layers = config.num_layers
         self.dropout = config.dropout
         self.is_attn = config.is_attn
-        self.device = device
         if self.is_attn:
             self.attention = Attention(self.hidden_size)
         self.input_size = self.hidden_size * 2 if self.is_attn else self.hidden_size

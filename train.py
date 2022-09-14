@@ -57,7 +57,7 @@ class Trainer:
 
         # model, optimizer, loss
         self.encoder = Encoder(self.config, self.src_tokenizer, self.device).to(self.device)
-        self.decoder = Decoder(self.config, self.trg_tokenizer, self.device).to(self.device)
+        self.decoder = Decoder(self.config, self.trg_tokenizer).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         if self.mode == 'train':
             self.enc_optimizer = optim.Adam(self.encoder.parameters(), lr=self.lr)
