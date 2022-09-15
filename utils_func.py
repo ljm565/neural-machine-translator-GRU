@@ -20,7 +20,7 @@ def preprocessing(s):
     s = unicodeToAscii(s)
     for punc in '!?.,"':
         s = s.replace(punc, ' '+punc)
-    s = re.sub('[#$%&()*+\-/:;<=>@\[\\\]^_`{|}~]', '', s).lower()
+    s = re.sub('[#$%&()*+\-/:;<=>@\[\]^_`{|}~]', '', s).lower()
     s = ' '.join(s.split())
     return s
 
