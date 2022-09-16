@@ -187,7 +187,7 @@ class Trainer:
             print('The number of results that you want to see are larger than total test set')
             raise AssertionError
         
-        # statistics of IMDb test set
+        # statistics of the test set
         phase = 'test'
         total_loss = 0
         all_val_src, all_val_trg, all_val_output, all_val_score = [], [], [], []
