@@ -77,11 +77,11 @@ def main(config_path:Config, args:ArgumentParser):
     elif args.mode == 'inference':
         print('inference starting...\n')
         while 1:
-            query = input('Input English: ')
+            query = input('English: ')
             if query == 'exit':
                 break
             output = trainer.inference(query)
-            print(output, '\n')
+            print('French: ', output, '\n')
         
     else:
         print("Please select mode among 'train', 'test', and 'inference'")
