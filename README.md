@@ -61,7 +61,7 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
     * model_name: 학습 모델이 저장될 파일 이름 설정. 모델은 base_path/model/{model_name}/{model_name}.pt 로 저장.
     * loss_data_name: 학습 시 발생한 loss data를 저장하기 위한 이름 설정. base_path/loss/{loss_data_name}.pkl 파일로 저장. 내부에 중단된 학습을 다시 시작할 때, 학습 과정에 발생한 loss 데이터를 그릴 때 등 필요한 데이터를 dictionary 형태로 저장.
     * vocab_size: 최대 vocab size 설정.
-    * max_len: 토큰화 된 리뷰 데이터의 최대 길이.
+    * max_len: 토큰화 된 번역 source, target 데이터의 최대 길이.
     * hidden_size: GRU 모델의 hidden dimension.
     * num_layers: GRU 모델의 레이어 수.
     * dropout: 모델의 dropout 비율.
