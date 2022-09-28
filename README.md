@@ -70,7 +70,7 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
     * lr: learning rate 지정.
     * teacher_forcing_ratio: Teacher forcing (교사 강요) 비율. 1일 경우 모든 학습이 teacher forcing으로 이루어짐(e.g. 0.9일 경우 학습의 step마다 10 %의 확률로 scheduled sampling 방식으로 학습이 진행됨). 
     * result_num: 모델 테스트 시, 결과를 보여주는 sample 개수.
-    * early_stop_criterion: Test set의 학습이 최소 loss를 내어준 학습 epoch 대비, 설정된 숫자만큼 epoch이 지나도 나아지지 않을 경우 학습 조기 종료.
+    * early_stop_criterion: Test set의 최소 loss를 내어준 학습 epoch 대비, 설정된 숫자만큼 epoch이 지나도 나아지지 않을 경우 학습 조기 종료.
     * visualize_attn: {0, 1} 중 선택. 1이면 랜덤으로 result_num에서 설정해준 개수만큼 랜덤으로 attention score를 가시화하여 {base_path}/result 폴더에 모델 이름으로 이미지 저장.
     <br><br><br>
 
