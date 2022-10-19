@@ -126,6 +126,8 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
 
 
     * 기계 번역 결과 샘플<br>
+        Inference의 결과가 아닌 teacher forcing으로 확인한 결과입니다.
+        실제 테스트를 하고싶다면 mode를 inference로 설정하면 됩니다.
         * Model with Attention
             ```
             # Sample 1
