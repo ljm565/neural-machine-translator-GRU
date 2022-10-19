@@ -77,8 +77,8 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
 
 ## 결과
 * ### Neural Machine Translator GRU 모델별 결과
-    아래 결과는 test set에서 가장 낮은 loss를 가진 모델의 점수 결과입니다.
-    따라서 학습 중 가장 좋았던 점수랑 차이가 있을 수 있습니다.
+    아래 표기된 결과는 test set에서 가장 낮은 loss를 가진 모델의 점수입니다.
+    따라서 그래프에서 보이는 학습 중 best score와 차이가 있을 수 있습니다.
     * Training Set Loss History<br>
         <img src="images/trainLoss.png" width="80%"><br><br>
 
