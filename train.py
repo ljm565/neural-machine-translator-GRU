@@ -52,7 +52,7 @@ class Trainer:
             self.dataloaders = {
                 s: DataLoader(d, self.batch_size, shuffle=True) if s == 'train' else DataLoader(d, self.batch_size, shuffle=False)
                 for s, d in self.dataset.items()}
-        elif self.mode == 'test':
+        else:
             self.dataset = {s: DLoader(load_dataset(p), self.tokenizers, self.config) for s, p in self.data_path.items() if s == 'test'}
             self.dataloaders = {s: DataLoader(d, self.batch_size, shuffle=False) for s, d in self.dataset.items() if s == 'test'}
 
@@ -274,3 +274,76 @@ class Trainer:
         if output.split()[-1] == self.tokenizers[1].eos_token:
             return ' '.join(output.split()[:-1])
         return output       
+
+
+
+    def inference_score(self, result_num, model_name):
+        if result_num > len(self.dataloaders['test'].dataset):
+            print('The number of results that you want to see are larger than total test set')
+            sys.exit()
+        
+        # statistics of the test set
+        phase = 'test'
+        total_loss = 0
+        all_val_src, all_val_trg, all_val_output, all_val_score = [], [], [], []
+
+        with torch.no_grad():
+            self.encoder.eval()
+            self.decoder.eval()
+
+            for src, trg, mask in self.dataloaders[phase]:
+                batch = src.size(0)
+                src, trg = src.to(self.device), trg.to(self.device)
+                if self.config.is_attn:
+                    mask = mask.to(self.device)
+                enc_output, hidden = self.encoder(src)
+                
+                decoder_all_output, decoder_all_score = [], []
+                for j in range(self.max_len):
+                    if j == 0:
+                        trg_word = trg[:, j].unsqueeze(1)
+                        dec_output, hidden, score = self.decoder(trg_word, hidden, enc_output, mask)
+                    else:
+                        trg_word = torch.argmax(dec_output, dim=-1)
+                        dec_output, hidden, score = self.decoder(trg_word.detach(), hidden, enc_output, mask)
+                    
+                    decoder_all_output.append(dec_output)
+                    if self.config.is_attn:
+                        decoder_all_score.append(score)
+
+                decoder_all_output = torch.cat(decoder_all_output, dim=1)
+                if self.config.is_attn:
+                    decoder_all_score = torch.cat(decoder_all_score, dim=2)
+                loss = self.criterion(decoder_all_output[:, :-1, :].reshape(-1, decoder_all_output.size(-1)), trg[:, 1:].reshape(-1))
+                all_val_src.append(src.detach().cpu())
+                all_val_trg.append(trg.detach().cpu())
+                all_val_output.append(decoder_all_output.detach().cpu())
+                if self.config.is_attn:
+                    all_val_score.append(decoder_all_score.detach().cpu())
+                total_loss += loss.item()*batch
+
+        # calculate loss and ppl
+        total_loss = total_loss / len(self.dataloaders[phase].dataset)
+        print('Inference Score')
+        print('loss: {}, ppl: {}'.format(total_loss, np.exp(total_loss)))
+
+        # calculate scores
+        all_val_trg_l, all_val_output_l = tensor2list(all_val_trg, all_val_output, self.trg_tokenizer)
+        bleu2 = cal_scores(all_val_trg_l, all_val_output_l, 'bleu', 2)
+        bleu4 = cal_scores(all_val_trg_l, all_val_output_l, 'bleu', 4)
+        nist2 = cal_scores(all_val_trg_l, all_val_output_l, 'nist', 2)
+        nist4 = cal_scores(all_val_trg_l, all_val_output_l, 'nist', 4)
+        print('\nInference Score')
+        print('bleu2: {}, bleu4: {}, nist2: {}, nist4: {}'.format(bleu2, bleu4, nist2, nist4))
+
+        # visualize the attention score
+        all_val_src = torch.cat(all_val_src, dim=0)
+        all_val_trg = torch.cat(all_val_trg, dim=0)
+        all_val_output = torch.argmax(torch.cat(all_val_output, dim=0), dim=2)
+        if self.config.visualize_attn and self.config.is_attn:
+            all_val_score = torch.cat(all_val_score, dim=0)
+            save_path = self.base_path + 'result/' + model_name
+            visualize_attn(all_val_score, all_val_src, all_val_trg, all_val_output, self.tokenizers, result_num, save_path)
+        else:
+            ids = random.sample(list(range(all_val_trg.size(0))), result_num)
+            print_samples(all_val_src, all_val_trg, all_val_output, self.tokenizers, result_num, ids)

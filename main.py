@@ -78,6 +78,7 @@ def main(config_path:Config, args:ArgumentParser):
     
     elif args.mode == 'inference':
         print('inference starting...\n')
+        trainer.inference_score(config.result_num, args.name+'_inference')
         while 1:
             query = input('English: ')
             if query == 'exit':
