@@ -77,8 +77,10 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
 
 ## 결과
 * ### Neural Machine Translator GRU 모델별 결과
-    아래 표기된 결과는 test set에서 가장 낮은 loss를 가진 모델의 점수입니다.
+    아래 loss, score의 결과는 inference의 결과가 아닌 teacher forcing으로 확인한 결과입니다.
+    그리고 아래 표기된 결과는 test set에서 가장 낮은 loss를 가진 모델의 점수입니다.
     따라서 그래프에서 보이는 학습 중 best score와 차이가 있을 수 있습니다.
+    마지막으로 inference 방식으로 계산된 loss 및 score를 보고싶다면 inference mode로 실행 시 자동 계산 되므로 확인할 수 있습니다.
     * Training Set Loss History<br>
         <img src="images/trainLoss.png" width="80%"><br><br>
 
@@ -127,7 +129,8 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
 
     * 기계 번역 결과 샘플<br>
         Inference의 결과가 아닌 teacher forcing으로 확인한 결과입니다.
-        실제 테스트를 하고싶다면 mode를 inference로 설정하면 됩니다.
+        Inference 방식으로 계산된 번역 결과 및 attention 가시화를 하고싶다면 inference mode로 실행 시 확인할 수 있습니다.
+        그리고 inference를 할 때 위의 score 및 결과 샘플을 내어준 후, 실제 번역기 테스트가 가능합니다.
         * Model with Attention
             ```
             # Sample 1
