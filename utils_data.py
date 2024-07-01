@@ -24,7 +24,7 @@ class DLoader(Dataset):
 
     
     def add_special_token(self, s, tokenizer):
-        s = [tokenizer.sos_token_id] + tokenizer.encode(s)[:self.max_len-2] + [tokenizer.eos_token_id]
+        s = [tokenizer.bos_token_id] + tokenizer.encode(s)[:self.max_len-2] + [tokenizer.eos_token_id]
         mask_l = len(s)
         s = s + [tokenizer.pad_token_id] * (self.max_len - len(s))
         return s, mask_l

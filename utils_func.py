@@ -113,7 +113,7 @@ def visualize_attn(score, src, trg, pred, tokenizers, result_num, save_path):
 
 
 def make_inference_data(query, tokenizer, max_len):
-    query = [tokenizer.sos_token_id] + tokenizer.encode(preprocessing(query)) + [tokenizer.eos_token_id]
+    query = [tokenizer.bos_token_id] + tokenizer.encode(preprocessing(query)) + [tokenizer.eos_token_id]
     mask = torch.zeros(max_len)
     mask[:len(query)] = 1
     query = query + [tokenizer.pad_token_id] * (max_len - len(query))
