@@ -259,7 +259,7 @@ class Trainer:
             self.decoder.eval()
 
             enc_output, hidden = self.encoder(query)
-            decoder_all_output, decoder_sos = [], torch.LongTensor([[self.tokenizers[1].sos_token_id]]).to(self.device)
+            decoder_all_output, decoder_sos = [], torch.LongTensor([[self.tokenizers[1].bos_token_id]]).to(self.device)
             for j in range(self.max_len):
                 if j == 0:
                     dec_output, hidden, _ = self.decoder(decoder_sos, hidden, enc_output, mask)
