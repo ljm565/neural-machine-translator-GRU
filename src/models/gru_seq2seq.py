@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from utils import LOGGER, colorstr
 
 
 class Encoder(nn.Module):
@@ -78,6 +79,28 @@ class Decoder(nn.Module):
         x, hn = self.gru(x, hidden)
         x = self.fc(self.relu(x))
         return x, hn, score
+    
+
+    def batch_inference(self, start_tokens, enc_output, hidden, mask, max_len, tokenizer, loss_func=None, target=None):
+        if loss_func:
+             assert target != None, LOGGER(colorstr('red', 'Target must be required if you want to return loss values..'))
+
+        decoder_all_output = []
+        for _ in range(max_len):
+            trg_word = start_tokens.unsqueeze(1)
+            dec_output, hidden, _ = self.forward(trg_word, hidden, enc_output, mask)
+            decoder_all_output.append(dec_output)
+
+        decoder_all_output = torch.cat(decoder_all_output, dim=1)
+        predictions = [tokenizer.decode(pred.tolist()) for pred in decoder_all_output]
+
+        if loss_func:
+            loss = loss_func(decoder_all_output[:, :-1, :].reshape(-1, decoder_all_output.size(-1)), target[:, 1:].reshape(-1))
+            return predictions, loss
+        
+        return predictions, None
+        
+
 
 
 

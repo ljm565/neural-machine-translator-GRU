@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch import distributed as dist
 
-from tools import TrainingLogger
 from tools.tokenizers import WordTokenizer
+from tools import TrainingLogger, Evaluator
 from trainer.build import get_model, get_data_loader
 from utils import RANK, LOGGER, colorstr, init_seeds
 from utils.filesys_utils import *
@@ -48,6 +48,8 @@ class Trainer:
         # path, data params
         self.config.is_rank_zero = self.is_rank_zero
         self.resume_path = resume_path
+        self.max_len = self.config.max_len
+        self.metrics = self.config.metrics
 
         # init tokenizer, model, dataset, dataloader, etc.
         self.modes = ['train', 'validation'] if self.is_training_mode else ['train', 'validation', 'validation']
@@ -55,6 +57,7 @@ class Trainer:
         self.dataloaders = get_data_loader(self.config, self.tokenizers, self.modes, self.is_ddp)
         self.encoder, self.decoder = self._init_model(self.config, self.tokenizers, self.mode)
         self.training_logger = TrainingLogger(self.config, self.is_training_mode)
+        self.evaluator = Evaluator(self.tokenizers[1])
 
         # save the yaml config
         if self.is_rank_zero and self.is_training_mode:
@@ -165,7 +168,8 @@ class Trainer:
             phase: str,
             epoch: int
         ):
-        self.model.train()
+        self.encoder.train()
+        self.decoder.train()
         train_loader = self.dataloaders[phase]
         nb = len(train_loader)
 
@@ -174,21 +178,40 @@ class Trainer:
 
         # init progress bar
         if RANK in (-1, 0):
-            logging_header = ['BCE Loss', 'Accuracy']
+            logging_header = ['CE Loss']
             pbar = init_progress_bar(train_loader, self.is_rank_zero, logging_header, nb)
 
-        for i, (x, y) in pbar:
+        for i, (src, trg, mask) in pbar:
             self.train_cur_step += 1
-            batch_size = x.size(0)
-            x, y = x.to(self.device), y.to(self.device)
+            batch_size = src.size(0)
+            src, trg = src.to(self.device), trg.to(self.device)
+            if self.config.use_attention:
+                mask = mask.to(self.device)
             
-            self.optimizer.zero_grad()
-            output, _ = self.model(x)
-            loss = self.criterion(output, y)
-            loss.backward()
-            self.optimizer.step()
+            teacher_forcing = True if random.random() < self.config.teacher_forcing_ratio else False
+            self.enc_optimizer.zero_grad()
+            self.dec_optimizer.zero_grad()
 
-            train_acc = ((output > self.config.positive_threshold).float()==y).float().sum() / batch_size
+            enc_output, hidden = self.encoder(src)
+            
+            # iteration one by one due to Badanau attention mechanism
+            decoder_all_output = []
+            for j in range(self.max_len):
+                if teacher_forcing or j == 0:
+                    trg_word = trg[:, j].unsqueeze(1)
+                    dec_output, hidden, _ = self.decoder(trg_word, hidden, enc_output, mask)
+                    decoder_all_output.append(dec_output)
+                else:
+                    trg_word = torch.argmax(dec_output, dim=-1)
+                    dec_output, hidden, _ = self.decoder(trg_word.detach(), hidden, enc_output, mask)
+                    decoder_all_output.append(dec_output)
+
+            decoder_all_output = torch.cat(decoder_all_output, dim=1)
+            loss = self.criterion(decoder_all_output[:, :-1, :].reshape(-1, decoder_all_output.size(-1)), trg[:, 1:].reshape(-1))
+
+            loss.backward()
+            self.enc_optimizer.step()
+            self.dec_optimizer.step()
 
             if self.is_rank_zero:
                 self.training_logger.update(
@@ -197,12 +220,11 @@ class Trainer:
                     self.train_cur_step,
                     batch_size, 
                     **{'train_loss': loss.item()},
-                    **{'train_acc': train_acc.item()}
                 )
-                loss_log = [loss.item(), train_acc.item()]
+                loss_log = [loss.item()]
                 msg = tuple([f'{epoch + 1}/{self.epochs}'] + loss_log)
                 pbar.set_description(('%15s' * 1 + '%15.4g' * len(loss_log)) % msg)
-            
+            break
         # upadate logs
         if self.is_rank_zero:
             self.training_logger.update_phase_end(phase, printing=True)
@@ -231,18 +253,32 @@ class Trainer:
 
                 val_loader = self.dataloaders[phase]
                 nb = len(val_loader)
-                logging_header = ['BCE Loss', 'Accuracy']
+                logging_header = ['CE Loss', 'Accuracy']
                 pbar = init_progress_bar(val_loader, self.is_rank_zero, logging_header, nb)
 
-                self.model.eval()
+                self.encoder.eval()
+                self.decoder.eval()
 
-                for i, (x, y) in pbar:
-                    batch_size = x.size(0)
-                    x, y = x.to(self.device), y.to(self.device)
+                for i, (src, trg, mask) in pbar:
+                    batch_size = src.size(0)
+                    src, trg = src.to(self.device), trg.to(self.device)
+                    if self.config.use_attention:
+                        mask = mask.to(self.device)
 
-                    output, score = self.model(x)
-                    loss = self.criterion(output, y)
-                    val_acc = ((output > self.config.positive_threshold).float()==y).float().sum() / batch_size
+                    enc_output, hidden = self.encoder(src)
+                    predictions, loss= self.decoder.batch_inference(
+                        start_tokens=trg[:, 0], 
+                        enc_output=enc_output,
+                        hidden=hidden,
+                        mask=mask,
+                        max_len=self.max_len,
+                        tokenizer=self.tokenizers[1],
+                        loss_func=self.criterion,
+                        target=trg
+                    )
+                    targets = [self.tokenizers[1].decode(t[1:].tolist()) for t in trg]
+                
+                    metric_results = self.metric_evaluation(loss, predictions, targets)
 
                     self.training_logger.update(
                         phase, 
@@ -250,12 +286,13 @@ class Trainer:
                         self.train_cur_step if is_training_now else 0, 
                         batch_size, 
                         **{'validation_loss': loss.item()},
-                        **{'validation_acc': val_acc.item()}
+                        **metric_results
                     )
 
-                    loss_log = [loss.item(), val_acc.item()]
-                    msg = tuple([f'{epoch + 1}/{self.epochs}'] + loss_log)
-                    pbar.set_description(('%15s' * 1 + '%15.4g' * len(loss_log)) % msg)
+                    # logging
+                    loss_log = [loss.item()]
+                    msg = tuple([f'{epoch+1}/{self.epochs}'] + loss_log + [metric_results[k] for k in self.metrics])
+                    pbar.set_description(('%15s' * 2 + '%15.4g' * (len(loss_log) + len(self.metrics))) % msg)
 
                     if not is_training_now:
                         _append_data_for_vis(
@@ -269,8 +306,27 @@ class Trainer:
                 # upadate logs and save model
                 self.training_logger.update_phase_end(phase, printing=True)
                 if is_training_now:
-                    self.training_logger.save_model(self.wdir, self.model)
+                    self.training_logger.save_model(self.wdir, {'encoder': self.encoder, 'decoder': self.decoder})
                     self.training_logger.save_logs(self.save_dir)
+
+    
+    def metric_evaluation(self, loss, response_pred, response_gt):
+        metric_results = {k: 0 for k in self.metrics}
+        for m in self.metrics:
+            if m == 'ppl':
+                metric_results[m] = self.evaluator.cal_ppl(loss.item())
+            elif m == 'bleu2':
+                metric_results[m] = self.evaluator.cal_bleu_score(response_pred, response_gt, n=2)
+            elif m == 'bleu4':
+                metric_results[m] = self.evaluator.cal_bleu_score(response_pred, response_gt, n=4)
+            elif m == 'nist2':
+                metric_results[m] = self.evaluator.cal_nist_score(response_pred, response_gt, n=2)
+            elif m == 'nist4':
+                metric_results[m] = self.evaluator.cal_nist_score(response_pred, response_gt, n=4)
+            else:
+                LOGGER.warning(f'{colorstr("red", "Invalid key")}: {m}')
+        
+        return metric_results
         
 
     def vis_attention(self, phase, result_num):

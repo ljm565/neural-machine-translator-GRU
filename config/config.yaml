@@ -12,7 +12,7 @@ name: tatoeba
 # model config
 vocab_size: 10000
 max_len: 128
-num_layer: 3              # Number of each residual block's layer. A model consisting of a total of (num_layer * 2 * 3 + 2) layers will be created.
+num_layers: 3              # Number of each residual block's layer. A model consisting of a total of (num_layer * 2 * 3 + 2) layers will be created.
 hidden_dim: 768
 dropout: 0.1
 use_attention: True
@@ -34,4 +34,5 @@ lr: 1e-4
 teacher_forcing_ratio: 1
 
 # logging config
-common: ['train_loss', 'train_acc', 'validation_loss', 'validation_acc']
+common: ['train_loss', 'validation_loss']
+metrics: ['ppl', 'bleu2', 'bleu4', 'nist2', 'nist4']   # You can add more metrics after implements metric validation codes
