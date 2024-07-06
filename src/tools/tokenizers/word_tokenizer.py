@@ -1,10 +1,11 @@
 from collections import Counter
-from utils_func import load_dataset
+
+from utils.func_utils import load_dataset
 
 
 
 class WordTokenizer:
-    def __init__(self, config, trainset_path, src):
+    def __init__(self, config, trainset, src):
         self.data_id = 0 if src else 1
         self.vocab_size = config.vocab_size
         self.pad_token, self.bos_token, self.eos_token, self.unk_token = '[PAD]', '[BOS]', '[EOS]', '[UNK]'
@@ -14,7 +15,7 @@ class WordTokenizer:
 
         # count the word frequency
         self.word_freq = Counter()
-        for s in [d[self.data_id].split() for d in load_dataset(trainset_path)]:
+        for s in [d[self.data_id].split() for d in trainset]:
             self.word_freq.update(s)
 
         # update vocab

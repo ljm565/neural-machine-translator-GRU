@@ -9,7 +9,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.pad_token_id = tokenizer.pad_token_id
         self.vocab_size = tokenizer.vocab_size
-        self.hidden_size = config.hidden_size
+        self.hidden_size = config.hidden_dim
         self.num_layers = config.num_layers
         self.dropout = config.dropout
         self.device = device
@@ -47,13 +47,13 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.pad_token_id = tokenizer.pad_token_id
         self.vocab_size = tokenizer.vocab_size
-        self.hidden_size = config.hidden_size
+        self.hidden_size = config.hidden_dim
         self.num_layers = config.num_layers
         self.dropout = config.dropout
-        self.is_attn = config.is_attn
-        if self.is_attn:
+        self.use_attention = config.use_attention
+        if self.use_attention:
             self.attention = Attention(self.hidden_size)
-        self.input_size = self.hidden_size * 2 if self.is_attn else self.hidden_size
+        self.input_size = self.hidden_size * 2 if self.use_attention else self.hidden_size
 
         self.embedding = nn.Embedding(self.vocab_size, self.hidden_size, padding_idx=self.pad_token_id)
         self.gru = nn.GRU(input_size=self.input_size,
@@ -71,7 +71,7 @@ class Decoder(nn.Module):
         score = None
 
         x = self.embedding(x)
-        if self.is_attn:
+        if self.use_attention:
             enc_output, score = self.attention(self.relu(enc_output), self.relu(hidden[-1]), mask)
             x = torch.cat((x, enc_output.unsqueeze(1)), dim=-1)
         x = self.dropout_layer(x)

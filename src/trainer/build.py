@@ -4,26 +4,30 @@ import os
 import torch
 from torch.utils.data import DataLoader, distributed
 
-from models import SentimentLSTM
-from utils import RANK
+from models import Encoder, Decoder
+from utils import LOGGER, RANK, colorstr
 from utils.data_utils import DLoader, CustomDLoader, seed_worker, get_tatoeba
 
 PIN_MEMORY = str(os.getenv('PIN_MEMORY', True)).lower() == 'true'  # global pin_memory for dataloaders
 
 
 
-def get_model(config, tokenizer, device):
-    model = SentimentLSTM(config, tokenizer, device)
-    return model.to(device)
+def get_model(config, tokenizers, device):
+    src_tokenizer, trg_tokenizer = tokenizers
+    encoder = Encoder(config, src_tokenizer, device).to(device)
+    decoder = Decoder(config, trg_tokenizer).to(device)
+    return encoder, decoder
 
 
-def build_dataset(config, tokenizer, modes):
+def build_dataset(config, tokenizers, modes):
     if config.tatoeba_train:
         trainset, testset = get_tatoeba(config)
         tmp_dsets = {'train': trainset, 'validation': testset}
-        dataset_dict = {mode: DLoader(config, tmp_dsets[mode], tokenizer) for mode in modes}
+        dataset_dict = {mode: DLoader(config, tmp_dsets[mode], tokenizers) for mode in modes}
     else:
-        dataset_dict = {mode: CustomDLoader(config.CUSTOM.get(f'{mode}_data_path')) for mode in modes}
+        LOGGER.warning(colorstr('yellow', 'You have to implement data pre-processing code..'))
+        # dataset_dict = {mode: CustomDLoader(config.CUSTOM.get(f'{mode}_data_path')) for mode in modes}
+        raise NotImplementedError
     return dataset_dict
 
 
@@ -45,8 +49,8 @@ def build_dataloader(dataset, batch, workers, shuffle=True, is_ddp=False):
                               generator=generator)
 
 
-def get_data_loader(config, tokenizer, modes, is_ddp=False):
-    datasets = build_dataset(config, tokenizer, modes)
+def get_data_loader(config, tokenizers, modes, is_ddp=False):
+    datasets = build_dataset(config, tokenizers, modes)
     dataloaders = {m: build_dataloader(datasets[m], 
                                        config.batch_size, 
                                        config.workers, 

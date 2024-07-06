@@ -14,7 +14,7 @@ class TatoebaDownloader:
         self.data_dir = config.tatoeba.path
         self.splits = ['train', 'test']
 
-
+    @staticmethod
     def preprocessing_data(r_path):
         with open(r_path, 'r') as f:
             data = f.readlines()
@@ -39,7 +39,7 @@ class TatoebaDownloader:
     
     def __call__(self):
         raw_data_path = os.path.join(self.data_dir, 'tatoeba/raw/eng-fra.txt')
-        pp_trainset_path, pp_testset_path = os.path.join(self.data_dir, 'tatoeba/processed/tatoeba.train'), os.path.join(self.data_dir, 'tatoeba/processed/tatoeba.test')
+        pp_trainset_path, pp_testset_path = os.path.join(self.data_dir, 'tatoeba/processed/eng-fra.train'), os.path.join(self.data_dir, 'tatoeba/processed/eng-fra.test')
 
         if not (self.is_exist(pp_trainset_path) and self.is_exist(pp_testset_path)):
             LOGGER.info('Pre-processing the raw tatoeba dataset..')

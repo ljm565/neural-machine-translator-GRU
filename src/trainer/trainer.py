@@ -51,9 +51,9 @@ class Trainer:
 
         # init tokenizer, model, dataset, dataloader, etc.
         self.modes = ['train', 'validation'] if self.is_training_mode else ['train', 'validation', 'validation']
-        self.tokenizer = self._init_tokenizer(self.config)
-        self.dataloaders = get_data_loader(self.config, self.tokenizer, self.modes, self.is_ddp)
-        self.model = self._init_model(self.config, self.tokenizer, self.mode)
+        self.tokenizers = self._init_tokenizer(self.config)
+        self.dataloaders = get_data_loader(self.config, self.tokenizers, self.modes, self.is_ddp)
+        self.encoder, self.decoder = self._init_model(self.config, self.tokenizers, self.mode)
         self.training_logger = TrainingLogger(self.config, self.is_training_mode)
 
         # save the yaml config
@@ -64,9 +64,10 @@ class Trainer:
         
         # init criterion, optimizer, etc.
         self.epochs = self.config.epochs
-        self.criterion = nn.BCELoss()
+        self.criterion = nn.CrossEntropyLoss()
         if self.is_training_mode:
-            self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.lr)
+            self.enc_optimizer = optim.Adam(self.encoder.parameters(), lr=self.config.lr)
+            self.dec_optimizer = optim.Adam(self.decoder.parameters(), lr=self.config.lr)
 
 
     def _init_tokenizer(self, config):
@@ -83,34 +84,36 @@ class Trainer:
         return tokenizers
     
 
-    def _init_model(self, config, tokenizer, mode):
+    def _init_model(self, config, tokenizers, mode):
         def _resume_model(resume_path, device, is_rank_zero):
             try:
                 checkpoints = torch.load(resume_path, map_location=device)
             except RuntimeError:
                 LOGGER.warning(colorstr('yellow', 'cannot be loaded to MPS, loaded to CPU'))
                 checkpoints = torch.load(resume_path, map_location=torch.device('cpu'))
-            model.load_state_dict(checkpoints['model'])
+            encoder.load_state_dict(checkpoints['model']['encoder'])
+            decoder.load_state_dict(checkpoints['model']['decoder'])
             del checkpoints
             torch.cuda.empty_cache()
             gc.collect()
             if is_rank_zero:
                 LOGGER.info(f'Resumed model: {colorstr(resume_path)}')
-            return model
+            return encoder, decoder
 
-        # init model and tokenizer
+        # init models
         do_resume = mode == 'resume' or (mode == 'validation' and self.resume_path)
-        model = get_model(config, tokenizer, self.device)
+        encoder, decoder = get_model(config, tokenizers, self.device)
 
-        # resume model or resume model after applying peft
+        # resume model
         if do_resume:
-            model = _resume_model(self.resume_path, self.device, config.is_rank_zero)
+            encoder, decoder = _resume_model(self.resume_path, self.device, config.is_rank_zero)
 
         # init ddp
         if self.is_ddp:
-            torch.nn.parallel.DistributedDataParallel(model, device_ids=[self.device])
+            torch.nn.parallel.DistributedDataParallel(encoder, device_ids=[self.device])
+            torch.nn.parallel.DistributedDataParallel(decoder, device_ids=[self.device])
         
-        return model
+        return encoder, decoder
 
 
     def do_train(self):
