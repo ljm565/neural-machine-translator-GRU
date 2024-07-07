@@ -42,6 +42,7 @@ class TatoebaDownloader:
 
         if not (self.is_exist(pp_trainset_path) and self.is_exist(pp_testset_path)):
             LOGGER.info('Pre-processing the raw tatoeba dataset..')
+            os.makedirs(os.path.dirname(pp_trainset_path), exist_ok=True)
             trainset, testset = self.preprocessing_data(raw_data_path)
             write_dataset(pp_trainset_path, trainset)
             write_dataset(pp_testset_path, testset)            

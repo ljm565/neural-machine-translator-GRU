@@ -234,7 +234,7 @@ class Trainer:
                 loss_log = [loss.item()]
                 msg = tuple([f'{epoch + 1}/{self.epochs}'] + loss_log)
                 pbar.set_description(('%15s' * 1 + '%15.4g' * len(loss_log)) % msg)
-            break
+            
         # upadate logs
         if self.is_rank_zero:
             self.training_logger.update_phase_end(phase, printing=True)
