@@ -1,23 +1,13 @@
 import re
 import os
 import random
-import pickle
 import unicodedata
-from tqdm import tqdm
 import matplotlib.pyplot as plt
-from nltk.translate.bleu_score import corpus_bleu
-from nltk.translate.nist_score import corpus_nist
 
 import torch
 
 from utils import LOGGER, colorstr
 
-
-
-def save_checkpoint(file, model, optimizer):
-    state = {'model': {'encoder':model[0].state_dict(), 'decoder': model[1].state_dict()}, 'optimizer': {'encoder':optimizer[0].state_dict(), 'decoder': optimizer[1].state_dict()}}
-    torch.save(state, file)
-    print('model pt file is being saved\n')
 
 
 def preprocessing(s):
@@ -36,34 +26,12 @@ def unicodeToAscii(s):
     )
 
 
-def load_dataset(path):
-    with open(path, 'rb') as f:
-        data = pickle.load(f)
-    return data
-
-
 def print_samples(source, target, prediction):
     LOGGER.info('\n' + '-'*100)
     LOGGER.info(colorstr('SRC       : ') + source)
     LOGGER.info(colorstr('GT        : ') + target)
     LOGGER.info(colorstr('Prediction: ') + prediction)
     LOGGER.info('-'*100 + '\n')
-
-
-def bleu_score(ref, pred, weights):
-    return corpus_bleu(ref, pred, weights)
-
-
-def nist_score(ref, pred, n):
-    return corpus_nist(ref, pred, n)
-
-
-def cal_scores(ref, pred, type, n_gram):
-    assert type in ['bleu', 'nist']
-    if type == 'bleu':
-        wts = tuple([1/n_gram]*n_gram)
-        return bleu_score(ref, pred, wts)
-    return nist_score(ref, pred, n_gram)
 
 
 def visualize_attn(data4vis, tokenizers, result_num, save_dir):
@@ -94,11 +62,3 @@ def visualize_attn(data4vis, tokenizers, result_num, save_dir):
         plt.savefig(os.path.join(save_dir, f'attention_{num}.png'))
 
         print_samples(' '.join(src_tok), ' '.join(trg_tok), ' '.join(pred_tok))
-
-
-def make_inference_data(query, tokenizer, max_len):
-    query = [tokenizer.bos_token_id] + tokenizer.encode(preprocessing(query)) + [tokenizer.eos_token_id]
-    mask = torch.zeros(max_len)
-    mask[:len(query)] = 1
-    query = query + [tokenizer.pad_token_id] * (max_len - len(query))
-    return torch.LongTensor(query).unsqueeze(0), mask.unsqueeze(0)

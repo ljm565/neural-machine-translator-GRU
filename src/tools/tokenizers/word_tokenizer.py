@@ -1,7 +1,5 @@
 from collections import Counter
 
-from utils.func_utils import load_dataset
-
 
 
 class WordTokenizer:
