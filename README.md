@@ -82,45 +82,45 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
     따라서 그래프에서 보이는 학습 중 best score와 차이가 있을 수 있습니다.
     마지막으로 inference 방식으로 계산된 loss 및 score를 보고싶다면 inference mode로 실행 시 자동 계산 되므로 확인할 수 있습니다.
     * Training Set Loss History<br>
-        <img src="docs/figstrainLoss.png" width="80%"><br><br>
+        <img src="docs/figs/trainLoss.png" width="80%"><br><br>
 
     * Test Set Loss History<br>
-        <img src="docs/figstestLoss.png" width="80%"><br>
+        <img src="docs/figs/testLoss.png" width="80%"><br>
         * Model with Attention: 0.3367
         * Scheduled Sampling Model with Attention: 0.3509
         * Model without Attention: 0.3366
         * Scheduled Sampling Model without Attention: 0.3491<br><br>
 
     * Test Set Perplexity (PPL) History<br>
-        <img src="docs/figstestPPL.png" width="80%"><br>
+        <img src="docs/figs/testPPL.png" width="80%"><br>
         * Model with Attention: 1.4003
         * Scheduled Sampling Model with Attention: 1.4203
         * Model without Attention: 1.4002
         * Scheduled Sampling Model without Attention: 1.4178<br><br>
 
     * BLEU-2 Score History<br>
-        <img src="docs/figsbleu2.png" width="80%"><br>
+        <img src="docs/figs/bleu2.png" width="80%"><br>
         * Model with Attention: 0.5789
         * Scheduled Sampling Model with Attention: 0.5646
         * Model without Attention: 0.5735
         * Scheduled Sampling Model without Attention: 0.5656<br><br>
 
     * BLEU-4 Score History<br>
-        <img src="docs/figsbleu4.png" width="80%"><br>
+        <img src="docs/figs/bleu4.png" width="80%"><br>
         * Model with Attention: 0.3996
         * Scheduled Sampling Model with Attention: 0.3834
         * Model without Attention: 0.3893
         * Scheduled Sampling Model without Attention: 0.3849<br><br>
 
     * NIST-2 Score History<br>
-        <img src="docs/figsnist2.png" width="80%"><br>
+        <img src="docs/figs/nist2.png" width="80%"><br>
         * Model with Attention: 6.8475
         * Scheduled Sampling Model with Attention: 6.6922
         * Model without Attention: 6.8016
         * Scheduled Sampling Model without Attention: 6.7098<br><br>
 
     * NIST-4 Score History<br>
-        <img src="docs/figsnist4.png" width="80%"><br>
+        <img src="docs/figs/nist4.png" width="80%"><br>
         * Model with Attention: 7.1627
         * Scheduled Sampling Model with Attention: 7.0052
         * Model without Attention: 7.1178
@@ -151,9 +151,9 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
             pred: repondez a toutes les questions , s'il vous plait .
 
             ```
-            <img src="docs/figsnmt_GRU_Attn_attention0.jpg" width="32%">
-            <img src="docs/figsnmt_GRU_Attn_attention1.jpg" width="32%">
-            <img src="docs/figsnmt_GRU_Attn_attention2.jpg" width="32%"><br><br><br>
+            <img src="docs/figs/nmt_GRU_Attn_attention0.jpg" width="32%">
+            <img src="docs/figs/nmt_GRU_Attn_attention1.jpg" width="32%">
+            <img src="docs/figs/nmt_GRU_Attn_attention2.jpg" width="32%"><br><br><br>
 
         * Scheduled Sampling Model with Attention
             ```
@@ -175,9 +175,9 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
             pred: nous nous faut que tes conseils .
 
             ```
-            <img src="docs/figsnmt_GRU_Attn_ss_attention0.jpg" width="32%">
-            <img src="docs/figsnmt_GRU_Attn_ss_attention1.jpg" width="32%">
-            <img src="docs/figsnmt_GRU_Attn_ss_attention2.jpg" width="32%"><br><br><br>
+            <img src="docs/figs/nmt_GRU_Attn_ss_attention0.jpg" width="32%">
+            <img src="docs/figs/nmt_GRU_Attn_ss_attention1.jpg" width="32%">
+            <img src="docs/figs/nmt_GRU_Attn_ss_attention2.jpg" width="32%"><br><br><br>
 
         * Model without Attention
             ```

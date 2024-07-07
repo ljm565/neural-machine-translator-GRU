@@ -16,7 +16,7 @@ from utils import RANK, LOGGER, colorstr, init_seeds
 from utils.filesys_utils import *
 from utils.training_utils import *
 from utils.data_utils import get_tatoeba
-from utils.func_utils import visualize_attn
+from utils.func_utils import visualize_attn, print_samples
 
 
 
@@ -267,7 +267,7 @@ class Trainer:
 
                 val_loader = self.dataloaders[phase]
                 nb = len(val_loader)
-                logging_header = ['CE Loss', 'Accuracy']
+                logging_header = ['CE Loss'] + self.config.metrics
                 pbar = init_progress_bar(val_loader, self.is_rank_zero, logging_header, nb)
 
                 self.encoder.eval()
@@ -309,14 +309,11 @@ class Trainer:
                     # logging
                     loss_log = [loss.item()]
                     msg = tuple([f'{epoch+1}/{self.epochs}'] + loss_log + [metric_results[k] for k in self.metrics])
-                    pbar.set_description(('%15s' * 2 + '%15.4g' * (len(loss_log) + len(self.metrics))) % msg)
+                    pbar.set_description(('%15s' + '%15.4g' * (len(loss_log) + len(self.metrics))) % msg)
 
                     ids = random.sample(range(batch_size), self.config.prediction_print_n)
                     for id in ids:
-                        LOGGER.info('\n\n' + '-'*100)
-                        LOGGER.info(colorstr('Prediction: ') + predictions[id])
-                        LOGGER.info(colorstr('GT        : ') + targets4metrics[id])
-                        LOGGER.info('-'*100 + '\n')
+                        print_samples(' '.join(sources[id].split()[1:]), targets4metrics[id], predictions[id])
 
                     if not is_training_now:
                         _append_data_for_vis(
@@ -355,54 +352,43 @@ class Trainer:
                 LOGGER.warning(f'{colorstr("red", "Invalid key")}: {m}')
         
         return metric_results
-        
+    
 
     def vis_attention(self, phase, result_num):
-        src_tokenizer, trg_tokenizer = self.tokenizers[0], self.tokenizers[1]
-        ids = random.sample(list(range(score.size(0))), result_num)
-
-        for num, i in enumerate(ids):
-            src_tok = src_tokenizer.tokenize(src_tokenizer.decode(src[i].tolist()))
-            pred_tok = trg_tokenizer.tokenize(trg_tokenizer.decode(pred[i].tolist()))
-            
-            src_st, src_tr = 1, len(src_tok) - 1
-            pred_st, pred_tr = 0, len(pred_tok) - 1
-
-            score_i = score[i, src_st:src_tr, pred_st:pred_tr]
-            src_tok = src_tok[src_st:src_tr]
-            pred_tok = pred_tok[pred_st:pred_tr]
-
-            plt.figure(figsize=(8, 8))
-            plt.title('Neural Machine Translator Attention', fontsize=20)
-            plt.imshow(score_i, cmap='gray')
-            plt.yticks(list(range(len(src_tok))), src_tok)
-            plt.xticks(list(range(len(pred_tok))), pred_tok, rotation=90)
-            plt.colorbar()
-            plt.savefig(save_path + '_attention' + str(num)+'.jpg')
-
-        print_samples(src, trg, pred, tokenizers, result_num, ids)
-
-
-    def print_prediction_results(self, phase, result_num):
         if result_num > len(self.dataloaders[phase].dataset):
             LOGGER.info(colorstr('red', 'The number of results that you want to see are larger than total test set'))
             sys.exit()
 
         # validation
         self.epoch_validate(phase, 0, False)
-        all_x = torch.cat(self.data4vis['x'], dim=0)
-        all_y = torch.cat(self.data4vis['y'], dim=0)
-        all_pred = torch.cat(self.data4vis['pred'], dim=0)
+        if self.config.use_attention:
+            vis_save_dir = os.path.join(self.config.save_dir, 'vis_outputs') 
+            os.makedirs(vis_save_dir, exist_ok=True)
+            visualize_attn(self.data4vis, self.tokenizers, result_num, vis_save_dir)
+        else:
+            LOGGER.warning(colorstr('yellow', 'Your model does not have attention module..'))
 
-        ids = random.sample(range(all_x.size(0)), result_num)
-        all_x = all_x[ids]
-        all_y = all_y[ids]
-        all_pred = all_pred[ids]
 
-        all_x, all_y, output = all_x.tolist(), all_y.tolist(), np.round(output.tolist(), 3)
-        for x, y, pred in zip(all_x, all_y, output):
-            LOGGER.info(colorstr(self.tokenizer.decode(x)))
-            LOGGER.info('*'*100)
-            LOGGER.info(f'It is positive with a probability of {pred}')
-            LOGGER.info(f'ground truth: {y}')
-            LOGGER.info('*'*100 + '\n'*2)
+    # def print_prediction_results(self, phase, result_num):
+    #     if result_num > len(self.dataloaders[phase].dataset):
+    #         LOGGER.info(colorstr('red', 'The number of results that you want to see are larger than total test set'))
+    #         sys.exit()
+
+    #     # validation
+    #     self.epoch_validate(phase, 0, False)
+    #     all_x = torch.cat(self.data4vis['x'], dim=0)
+    #     all_y = torch.cat(self.data4vis['y'], dim=0)
+    #     all_pred = torch.cat(self.data4vis['pred'], dim=0)
+
+    #     ids = random.sample(range(all_x.size(0)), result_num)
+    #     all_x = all_x[ids]
+    #     all_y = all_y[ids]
+    #     all_pred = all_pred[ids]
+
+    #     all_x, all_y, output = all_x.tolist(), all_y.tolist(), np.round(output.tolist(), 3)
+    #     for x, y, pred in zip(all_x, all_y, output):
+    #         LOGGER.info(colorstr(self.tokenizer.decode(x)))
+    #         LOGGER.info('*'*100)
+    #         LOGGER.info(f'It is positive with a probability of {pred}')
+    #         LOGGER.info(f'ground truth: {y}')
+    #         LOGGER.info('*'*100 + '\n'*2)

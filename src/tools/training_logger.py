@@ -10,8 +10,8 @@ from utils import LOGGER, colorstr
 class TrainingLogger:
     def __init__(self, config, training=True):
         self.training = training
-        self.log_keys = config.common
         self.log_data = {'step': [], 'epoch': []}
+        self.log_keys = config.common + config.metrics
         self.log_data.update({k: [] for k in self.log_keys})
         self.train_batch_sizes, self.val_batch_sizes = [], []
         self.st = 0

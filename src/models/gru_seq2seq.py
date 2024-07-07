@@ -86,12 +86,13 @@ class Decoder(nn.Module):
              assert target != None, LOGGER(colorstr('red', 'Target must be required if you want to return loss values..'))
 
         decoder_all_output, decoder_all_score = [], []
-        for _ in range(max_len):
-            trg_word = start_tokens.unsqueeze(1)
+        trg_word = start_tokens.unsqueeze(1)
+        for i in range(max_len):
             dec_output, hidden, score = self.forward(trg_word, hidden, enc_output, mask)
-            decoder_all_output.append(dec_output.detach().cpu())
+            decoder_all_output.append(dec_output)
             if self.use_attention:
-                decoder_all_score.append(score.detach().cpu())
+                decoder_all_score.append(score)
+            trg_word = torch.argmax(dec_output, dim=-1)
 
         decoder_all_output = torch.cat(decoder_all_output, dim=1)
         if self.use_attention:

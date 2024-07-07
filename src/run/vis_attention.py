@@ -40,7 +40,7 @@ def validation(args, config):
         device = torch.device('cpu')
     else:
         device = torch.device('cpu') if config.device == 'cpu' else torch.device(f'cuda:{config.device[0]}')
-
+        
     trainer = Trainer(
         config, 
         'validation', 
@@ -48,18 +48,19 @@ def validation(args, config):
         resume_path=choose_proper_resume_model(args.resume_model_dir, args.load_model_type) if args.resume_model_dir else None
     )
 
-    trainer.epoch_validate(args.dataset_type, 0, False)
+    trainer.vis_attention(args.dataset_type, args.result_num)
 
 
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-r', '--resume_model_dir', type=str, required=True)
-    parser.add_argument('-l', '--load_model_type', type=str, default='metric', required=False, choices=['loss', 'last', 'metric'])
+    parser.add_argument('-r', '--resume_model_dir', type=str, required=False)
+    parser.add_argument('-l', '--load_model_type', type=str, default='metric', required=False, choices=['metric', 'loss', 'last'])
     parser.add_argument('-d', '--dataset_type', type=str, default='validation', required=False, choices=['train', 'validation', 'test'])
+    parser.add_argument('-n', '--result_num', type=int, default=10)
     args = parser.parse_args()
-
+    
     main(args)
 
     

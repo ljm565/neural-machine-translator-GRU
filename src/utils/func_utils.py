@@ -1,4 +1,5 @@
 import re
+import os
 import random
 import pickle
 import unicodedata
@@ -8,6 +9,8 @@ from nltk.translate.bleu_score import corpus_bleu
 from nltk.translate.nist_score import corpus_nist
 
 import torch
+
+from utils import LOGGER, colorstr
 
 
 
@@ -39,28 +42,12 @@ def load_dataset(path):
     return data
 
 
-def print_samples(src, trg, output, tokenizers, show_n=3, idx=None):
-    src, trg, output = src.detach().cpu(), trg.detach().cpu(), output.detach().cpu()
-    if idx == None:
-        idx = random.sample(list(range(trg.size(0))), show_n)
-        print('-'*50)
-        for i in idx:
-            s, t, o = src[i, :].tolist(), trg[i, 1:].tolist(), torch.argmax(output[i, :-1], dim=1).tolist()
-            s, t, o = tokenizers[0].decode(s), tokenizers[1].decode(t), tokenizers[1].decode(o)
-            print('src : {}'.format(' '.join(s.split()[1:-1])))
-            print('gt  : {}'.format(' '.join(t.split()[:-1])))
-            print('pred: {}\n'.format(' '.join(o.split()[:-1])))
-        print('-'*50 + '\n')
-    else:
-        print('-'*50)
-        for i in idx:
-            s, t, o = src[i, :].tolist(), trg[i, 1:].tolist(), output[i, :-1].tolist()
-            s, t, o = tokenizers[0].decode(s), tokenizers[1].decode(t), tokenizers[1].decode(o)
-            print('src : {}'.format(' '.join(s.split()[1:-1])))
-            print('gt  : {}'.format(' '.join(t.split()[:-1])))
-            print('pred: {}\n'.format(' '.join(o.split()[:-1])))
-        print('-'*50 + '\n')
-
+def print_samples(source, target, prediction):
+    LOGGER.info('\n' + '-'*100)
+    LOGGER.info(colorstr('SRC       : ') + source)
+    LOGGER.info(colorstr('GT        : ') + target)
+    LOGGER.info(colorstr('Prediction: ') + prediction)
+    LOGGER.info('-'*100 + '\n')
 
 
 def bleu_score(ref, pred, weights):
@@ -79,27 +66,23 @@ def cal_scores(ref, pred, type, n_gram):
     return nist_score(ref, pred, n_gram)
 
 
-
-def tensor2list(ref, pred, tokenizer):
-    ref, pred = torch.cat(ref, dim=0)[:, 1:], torch.cat(pred, dim=0)[:, :-1]
-    ref = [[tokenizer.decode(ref[i].tolist()).split()[:-1]] for i in range(ref.size(0))]
-    pred = [tokenizer.decode(torch.argmax(pred[i], dim=1).tolist()).split()[:-1] for i in range(pred.size(0))]
-    return ref, pred
-    
-
-def visualize_attn(score, src, trg, pred, tokenizers, result_num, save_path):
+def visualize_attn(data4vis, tokenizers, result_num, save_dir):
     src_tokenizer, trg_tokenizer = tokenizers[0], tokenizers[1]
-    ids = random.sample(list(range(score.size(0))), result_num)
+    src, trg, pred, score = data4vis['src'], data4vis['trg'], data4vis['pred'], torch.cat(data4vis['score'], dim=0)
+    ids = random.sample(range(len(src)), result_num)
 
     for num, i in enumerate(ids):
-        src_tok = src_tokenizer.tokenize(src_tokenizer.decode(src[i].tolist()))
-        pred_tok = trg_tokenizer.tokenize(trg_tokenizer.decode(pred[i].tolist()))
+        src_tok = src_tokenizer.tokenize(src[i])
+        trg_tok = trg_tokenizer.tokenize(trg[i])
+        pred_tok = trg_tokenizer.tokenize(pred[i])
         
         src_st, src_tr = 1, len(src_tok) - 1
+        trg_st, trg_tr = 1, len(trg_tok) - 1
         pred_st, pred_tr = 0, len(pred_tok) - 1
 
         score_i = score[i, src_st:src_tr, pred_st:pred_tr]
         src_tok = src_tok[src_st:src_tr]
+        trg_tok = trg_tok[trg_st:trg_tr]
         pred_tok = pred_tok[pred_st:pred_tr]
 
         plt.figure(figsize=(8, 8))
@@ -108,9 +91,9 @@ def visualize_attn(score, src, trg, pred, tokenizers, result_num, save_path):
         plt.yticks(list(range(len(src_tok))), src_tok)
         plt.xticks(list(range(len(pred_tok))), pred_tok, rotation=90)
         plt.colorbar()
-        plt.savefig(save_path + '_attention' + str(num)+'.jpg')
+        plt.savefig(os.path.join(save_dir, f'attention_{num}.png'))
 
-    print_samples(src, trg, pred, tokenizers, result_num, ids)
+        print_samples(' '.join(src_tok), ' '.join(trg_tok), ' '.join(pred_tok))
 
 
 def make_inference_data(query, tokenizer, max_len):
