@@ -10,7 +10,7 @@ import torch.optim as optim
 from torch import distributed as dist
 
 from tools.tokenizers import WordTokenizer
-from tools import TrainingLogger, Evaluator
+from tools import TrainingLogger, Evaluator, EarlyStopper
 from trainer.build import get_model, get_data_loader
 from utils import RANK, LOGGER, colorstr, init_seeds
 from utils.filesys_utils import *
@@ -58,6 +58,7 @@ class Trainer:
         self.encoder, self.decoder = self._init_model(self.config, self.tokenizers, self.mode)
         self.training_logger = TrainingLogger(self.config, self.is_training_mode)
         self.evaluator = Evaluator(self.tokenizers[1])
+        self.stopper, self.stop = EarlyStopper(self.config.patience), False
 
         # save the yaml config
         if self.is_rank_zero and self.is_training_mode:
@@ -155,6 +156,16 @@ class Trainer:
             torch.cuda.empty_cache()
             gc.collect()
 
+            # Early Stopping
+            if self.is_ddp:  # if DDP training
+                broadcast_list = [self.stop if self.is_rank_zero else None]
+                dist.broadcast_object_list(broadcast_list, 0)  # broadcast 'stop' to all ranks
+                if not self.is_rank_zero:
+                    self.stop = broadcast_list[0]
+            
+            if self.stop:
+                break  # must break all DDP ranks
+
             if self.is_rank_zero:
                 LOGGER.info(f"\nepoch {epoch+1} time: {time.time() - start} s\n\n\n")
 
@@ -237,14 +248,17 @@ class Trainer:
             is_training_now=True
         ):
         def _init_log_data_for_vis():
-            data4vis = {'x': [], 'y': [], 'pred': []}
+            data4vis = {'src': [], 'trg': [], 'pred': []}
             if self.config.use_attention:
-                data4vis.update({'attn': []})
+                data4vis.update({'score': []})
             return data4vis
 
         def _append_data_for_vis(**kwargs):
             for k, v in kwargs.items():
-                self.data4vis[k].append(v)
+                if isinstance(v, list):
+                    self.data4vis[k].extend(v)
+                else: 
+                    self.data4vis[k].append(v)
 
         with torch.no_grad():
             if self.is_rank_zero:
@@ -265,8 +279,12 @@ class Trainer:
                     if self.config.use_attention:
                         mask = mask.to(self.device)
 
+                    sources = [self.tokenizers[0].decode(s.tolist()) for s in src]
+                    targets = [self.tokenizers[1].decode(t.tolist()) for t in trg]
+                    targets4metrics = [self.tokenizers[1].decode(t[1:].tolist()) for t in trg]
+                    
                     enc_output, hidden = self.encoder(src)
-                    predictions, loss= self.decoder.batch_inference(
+                    predictions, score, loss = self.decoder.batch_inference(
                         start_tokens=trg[:, 0], 
                         enc_output=enc_output,
                         hidden=hidden,
@@ -276,9 +294,8 @@ class Trainer:
                         loss_func=self.criterion,
                         target=trg
                     )
-                    targets = [self.tokenizers[1].decode(t[1:].tolist()) for t in trg]
                 
-                    metric_results = self.metric_evaluation(loss, predictions, targets)
+                    metric_results = self.metric_evaluation(loss, predictions, targets4metrics)
 
                     self.training_logger.update(
                         phase, 
@@ -294,20 +311,31 @@ class Trainer:
                     msg = tuple([f'{epoch+1}/{self.epochs}'] + loss_log + [metric_results[k] for k in self.metrics])
                     pbar.set_description(('%15s' * 2 + '%15.4g' * (len(loss_log) + len(self.metrics))) % msg)
 
+                    ids = random.sample(range(batch_size), self.config.prediction_print_n)
+                    for id in ids:
+                        LOGGER.info('\n\n' + '-'*100)
+                        LOGGER.info(colorstr('Prediction: ') + predictions[id])
+                        LOGGER.info(colorstr('GT        : ') + targets4metrics[id])
+                        LOGGER.info('-'*100 + '\n')
+
                     if not is_training_now:
                         _append_data_for_vis(
-                            **{'x': x.detach().cpu(),
-                             'y': y.detach().cpu(),
-                             'pred': output.detach().cpu()}
+                            **{'src': sources,
+                               'trg': targets,
+                               'pred': predictions}
                         )
                         if self.config.use_attention:
-                            _append_data_for_vis(**{'attn': score.detach().cpu()})
+                            _append_data_for_vis(**{'score': score.detach().cpu()})
 
                 # upadate logs and save model
                 self.training_logger.update_phase_end(phase, printing=True)
                 if is_training_now:
                     self.training_logger.save_model(self.wdir, {'encoder': self.encoder, 'decoder': self.decoder})
                     self.training_logger.save_logs(self.save_dir)
+
+                    high_fitness = self.training_logger.model_manager.best_higher
+                    low_fitness = self.training_logger.model_manager.best_lower
+                    self.stop = self.stopper(epoch + 1, high=high_fitness, low=low_fitness)
 
     
     def metric_evaluation(self, loss, response_pred, response_gt):
@@ -330,24 +358,29 @@ class Trainer:
         
 
     def vis_attention(self, phase, result_num):
-        if result_num > len(self.dataloaders[phase].dataset):
-            LOGGER.info(colorstr('red', 'The number of results that you want to see are larger than total test set'))
-            sys.exit()
+        src_tokenizer, trg_tokenizer = self.tokenizers[0], self.tokenizers[1]
+        ids = random.sample(list(range(score.size(0))), result_num)
 
-        # validation
-        self.epoch_validate(phase, 0, False)
-        if self.config.use_attention:
-            vis_save_dir = os.path.join(self.config.save_dir, 'vis_outputs') 
-            os.makedirs(vis_save_dir, exist_ok=True)
-            visualize_attn(
-                vis_save_dir, 
-                self.data4vis,
-                self.tokenizer, 
-                self.config.positive_threshold,
-                result_num
-            )
-        else:
-            LOGGER.warning(colorstr('yellow', 'Your model does not have attention module..'))
+        for num, i in enumerate(ids):
+            src_tok = src_tokenizer.tokenize(src_tokenizer.decode(src[i].tolist()))
+            pred_tok = trg_tokenizer.tokenize(trg_tokenizer.decode(pred[i].tolist()))
+            
+            src_st, src_tr = 1, len(src_tok) - 1
+            pred_st, pred_tr = 0, len(pred_tok) - 1
+
+            score_i = score[i, src_st:src_tr, pred_st:pred_tr]
+            src_tok = src_tok[src_st:src_tr]
+            pred_tok = pred_tok[pred_st:pred_tr]
+
+            plt.figure(figsize=(8, 8))
+            plt.title('Neural Machine Translator Attention', fontsize=20)
+            plt.imshow(score_i, cmap='gray')
+            plt.yticks(list(range(len(src_tok))), src_tok)
+            plt.xticks(list(range(len(pred_tok))), pred_tok, rotation=90)
+            plt.colorbar()
+            plt.savefig(save_path + '_attention' + str(num)+'.jpg')
+
+        print_samples(src, trg, pred, tokenizers, result_num, ids)
 
 
     def print_prediction_results(self, phase, result_num):

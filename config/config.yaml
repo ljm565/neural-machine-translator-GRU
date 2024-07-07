@@ -11,10 +11,10 @@ name: tatoeba
 
 # model config
 vocab_size: 10000
-max_len: 128
-num_layers: 3              # Number of each residual block's layer. A model consisting of a total of (num_layer * 2 * 3 + 2) layers will be created.
+max_len: 32
+num_layers: 1              # Number of each residual block's layer. A model consisting of a total of (num_layer * 2 * 3 + 2) layers will be created.
 hidden_dim: 768
-dropout: 0.1
+dropout: 0
 use_attention: True
 
 # data config
@@ -30,8 +30,10 @@ CUSTOM:
 # train config
 batch_size: 128
 epochs: 100
-lr: 1e-4
+lr: 1e-3
 teacher_forcing_ratio: 1
+patience: 5                           # Early stopping epochs.
+prediction_print_n: 10
 
 # logging config
 common: ['train_loss', 'validation_loss']

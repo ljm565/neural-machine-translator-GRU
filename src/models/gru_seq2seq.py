@@ -85,20 +85,25 @@ class Decoder(nn.Module):
         if loss_func:
              assert target != None, LOGGER(colorstr('red', 'Target must be required if you want to return loss values..'))
 
-        decoder_all_output = []
+        decoder_all_output, decoder_all_score = [], []
         for _ in range(max_len):
             trg_word = start_tokens.unsqueeze(1)
-            dec_output, hidden, _ = self.forward(trg_word, hidden, enc_output, mask)
-            decoder_all_output.append(dec_output)
+            dec_output, hidden, score = self.forward(trg_word, hidden, enc_output, mask)
+            decoder_all_output.append(dec_output.detach().cpu())
+            if self.use_attention:
+                decoder_all_score.append(score.detach().cpu())
 
         decoder_all_output = torch.cat(decoder_all_output, dim=1)
-        predictions = [tokenizer.decode(pred.tolist()) for pred in decoder_all_output]
+        if self.use_attention:
+            decoder_all_score = torch.cat(decoder_all_score, dim=2)
+        
+        predictions = [tokenizer.decode(torch.argmax(pred, dim=-1).tolist()) for pred in decoder_all_output]
 
         if loss_func:
             loss = loss_func(decoder_all_output[:, :-1, :].reshape(-1, decoder_all_output.size(-1)), target[:, 1:].reshape(-1))
-            return predictions, loss
+            return predictions, decoder_all_score, loss
         
-        return predictions, None
+        return predictions, decoder_all_score, None
         
 
 

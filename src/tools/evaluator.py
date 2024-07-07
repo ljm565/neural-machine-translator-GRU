@@ -25,12 +25,11 @@ class Evaluator:
         assert (isinstance(pred, str) and isinstance(gt, str)) or (isinstance(pred, list) and isinstance(gt, list))    
         if isinstance(pred, str):
             pred, gt = [pred], [gt]
-        weights = tuple([1/n] * n)
         pred = [self.tokenizer.tokenize(text) for text in pred]
         gt = [[self.tokenizer.tokenize(text)] for text in gt]
         if isinstance(pred, str):
-            return sentence_nist(gt[0], pred[0], weights=weights)
-        return corpus_nist(gt, pred, weights=weights)
+            return sentence_nist(gt[0], pred[0], n=n)
+        return corpus_nist(gt, pred, n=n)
     
 
     def cal_ppl(self, loss):
