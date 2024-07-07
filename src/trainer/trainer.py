@@ -15,7 +15,7 @@ from utils import RANK, LOGGER, colorstr, init_seeds
 from utils.filesys_utils import *
 from utils.training_utils import *
 from utils.data_utils import get_tatoeba
-from utils.func_utils import visualize_attn, print_samples
+from utils.func_utils import visualize_attn, print_samples, make_inference_data
 
 
 
@@ -368,26 +368,29 @@ class Trainer:
             LOGGER.warning(colorstr('yellow', 'Your model does not have attention module..'))
 
 
-    # def print_prediction_results(self, phase, result_num):
-    #     if result_num > len(self.dataloaders[phase].dataset):
-    #         LOGGER.info(colorstr('red', 'The number of results that you want to see are larger than total test set'))
-    #         sys.exit()
+    def inference(self, query):
+        query, mask = make_inference_data(query, self.tokenizers[0], self.max_len)
 
-    #     # validation
-    #     self.epoch_validate(phase, 0, False)
-    #     all_x = torch.cat(self.data4vis['x'], dim=0)
-    #     all_y = torch.cat(self.data4vis['y'], dim=0)
-    #     all_pred = torch.cat(self.data4vis['pred'], dim=0)
+        with torch.no_grad():
+            query = query.to(self.device)
+            if self.config.use_attention:
+                mask = mask.to(self.device)
+            self.encoder.eval()
+            self.decoder.eval()
 
-    #     ids = random.sample(range(all_x.size(0)), result_num)
-    #     all_x = all_x[ids]
-    #     all_y = all_y[ids]
-    #     all_pred = all_pred[ids]
-
-    #     all_x, all_y, output = all_x.tolist(), all_y.tolist(), np.round(output.tolist(), 3)
-    #     for x, y, pred in zip(all_x, all_y, output):
-    #         LOGGER.info(colorstr(self.tokenizer.decode(x)))
-    #         LOGGER.info('*'*100)
-    #         LOGGER.info(f'It is positive with a probability of {pred}')
-    #         LOGGER.info(f'ground truth: {y}')
-    #         LOGGER.info('*'*100 + '\n'*2)
+            enc_output, hidden = self.encoder(query)
+            decoder_all_output, decoder_bos = [], torch.LongTensor([[self.tokenizers[1].bos_token_id]]).to(self.device)
+            for j in range(self.max_len):
+                if j == 0:
+                    dec_output, hidden, _ = self.decoder(decoder_bos, hidden, enc_output, mask)
+                    decoder_all_output.append(dec_output)
+                else:
+                    trg_word = torch.argmax(dec_output, dim=-1)
+                    dec_output, hidden, _ = self.decoder(trg_word.detach(), hidden, enc_output, mask)
+                    decoder_all_output.append(dec_output)
+            decoder_all_output = torch.cat(decoder_all_output, dim=1)
+            output = self.tokenizers[1].decode(torch.argmax(decoder_all_output.detach().cpu(), dim=-1)[0].tolist())
+        
+        if output.split()[-1] == self.tokenizers[1].eos_token:
+            return ' '.join(output.split()[:-1])
+        return output  

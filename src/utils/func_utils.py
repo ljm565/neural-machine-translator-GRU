@@ -62,3 +62,11 @@ def visualize_attn(data4vis, tokenizers, result_num, save_dir):
         plt.savefig(os.path.join(save_dir, f'attention_{num}.png'))
 
         print_samples(' '.join(src_tok), ' '.join(trg_tok), ' '.join(pred_tok))
+
+
+def make_inference_data(query, tokenizer, max_len):
+    query = [tokenizer.bos_token_id] + tokenizer.encode(preprocessing(query)) + [tokenizer.eos_token_id]
+    mask = torch.zeros(max_len)
+    mask[:len(query)] = 1
+    query = query + [tokenizer.pad_token_id] * (max_len - len(query))
+    return torch.LongTensor(query).unsqueeze(0), mask.unsqueeze(0)
