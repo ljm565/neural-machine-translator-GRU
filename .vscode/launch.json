@@ -31,5 +31,14 @@
             "console": "integratedTerminal",
             "justMyCode": true
         },
+        {
+            "name": "live demo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/run/inference.py",
+            "args": ["-r", "outputs/tatoeba/gru_w_attention"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
     ]
 }
