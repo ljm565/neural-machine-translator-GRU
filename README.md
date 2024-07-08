@@ -89,152 +89,145 @@ Please follow the steps below to train a GRU translator model.
 
 
 ## Training Results
-* ### Neural Machine Translator GRU 모델별 결과
-    아래 loss, score의 결과는 inference의 결과가 아닌 teacher forcing으로 확인한 결과입니다.
-    그리고 아래 표기된 결과는 test set에서 가장 낮은 loss를 가진 모델의 점수입니다.
-    따라서 그래프에서 보이는 학습 중 best score와 차이가 있을 수 있습니다.
-    마지막으로 inference 방식으로 계산된 loss 및 score를 보고싶다면 inference mode로 실행 시 자동 계산 되므로 확인할 수 있습니다.
-    * Training Set Loss History<br>
-        <img src="docs/figs/trainLoss.png" width="80%"><br><br>
+### Each Result of GRU Neural Machine Translator
+* Training Set Loss History<br>
+    <img src="docs/figs/trainLoss.png" width="80%"><br><br>
 
-    * Test Set Loss History<br>
-        <img src="docs/figs/testLoss.png" width="80%"><br>
-        * Model with Attention: 0.3367
-        * Scheduled Sampling Model with Attention: 0.3509
-        * Model without Attention: 0.3366
-        * Scheduled Sampling Model without Attention: 0.3491<br><br>
+* Test Set Loss History<br>
+    <img src="docs/figs/testLoss.png" width="80%"><br>
+    * Model with Attention: 0.3367
+    * Scheduled Sampling Model with Attention: 0.3509
+    * Model without Attention: 0.3366
+    * Scheduled Sampling Model without Attention: 0.3491<br><br>
 
-    * Test Set Perplexity (PPL) History<br>
-        <img src="docs/figs/testPPL.png" width="80%"><br>
-        * Model with Attention: 1.4003
-        * Scheduled Sampling Model with Attention: 1.4203
-        * Model without Attention: 1.4002
-        * Scheduled Sampling Model without Attention: 1.4178<br><br>
+* Test Set Perplexity (PPL) History<br>
+    <img src="docs/figs/testPPL.png" width="80%"><br>
+    * Model with Attention: 1.4003
+    * Scheduled Sampling Model with Attention: 1.4203
+    * Model without Attention: 1.4002
+    * Scheduled Sampling Model without Attention: 1.4178<br><br>
 
-    * BLEU-2 Score History<br>
-        <img src="docs/figs/bleu2.png" width="80%"><br>
-        * Model with Attention: 0.5789
-        * Scheduled Sampling Model with Attention: 0.5646
-        * Model without Attention: 0.5735
-        * Scheduled Sampling Model without Attention: 0.5656<br><br>
+* BLEU-2 Score History<br>
+    <img src="docs/figs/bleu2.png" width="80%"><br>
+    * Model with Attention: 0.5789
+    * Scheduled Sampling Model with Attention: 0.5646
+    * Model without Attention: 0.5735
+    * Scheduled Sampling Model without Attention: 0.5656<br><br>
 
-    * BLEU-4 Score History<br>
-        <img src="docs/figs/bleu4.png" width="80%"><br>
-        * Model with Attention: 0.3996
-        * Scheduled Sampling Model with Attention: 0.3834
-        * Model without Attention: 0.3893
-        * Scheduled Sampling Model without Attention: 0.3849<br><br>
+* BLEU-4 Score History<br>
+<img src="docs/figs/bleu4.png" width="80%"><br>
+* Model with Attention: 0.3996
+* Scheduled Sampling Model with Attention: 0.3834
+* Model without Attention: 0.3893
+* Scheduled Sampling Model without Attention: 0.3849<br><br>
 
-    * NIST-2 Score History<br>
-        <img src="docs/figs/nist2.png" width="80%"><br>
-        * Model with Attention: 6.8475
-        * Scheduled Sampling Model with Attention: 6.6922
-        * Model without Attention: 6.8016
-        * Scheduled Sampling Model without Attention: 6.7098<br><br>
+* NIST-2 Score History<br>
+<img src="docs/figs/nist2.png" width="80%"><br>
+* Model with Attention: 6.8475
+* Scheduled Sampling Model with Attention: 6.6922
+* Model without Attention: 6.8016
+* Scheduled Sampling Model without Attention: 6.7098<br><br>
 
-    * NIST-4 Score History<br>
-        <img src="docs/figs/nist4.png" width="80%"><br>
-        * Model with Attention: 7.1627
-        * Scheduled Sampling Model with Attention: 7.0052
-        * Model without Attention: 7.1178
-        * Scheduled Sampling Model without Attention: 7.0177<br><br>
+* NIST-4 Score History<br>
+<img src="docs/figs/nist4.png" width="80%"><br>
+* Model with Attention: 7.1627
+* Scheduled Sampling Model with Attention: 7.0052
+* Model without Attention: 7.1178
+* Scheduled Sampling Model without Attention: 7.0177<br><br>
 
 
-    * 기계 번역 결과 샘플<br>
-        Inference의 결과가 아닌 teacher forcing으로 확인한 결과입니다.
-        Inference 방식으로 계산된 번역 결과 및 attention 가시화를 하고싶다면 inference mode로 실행 시 확인할 수 있습니다.
-        그리고 inference를 할 때 위의 score 및 결과 샘플을 내어준 후, 실제 번역기 테스트가 가능합니다.
-        * Model with Attention
-            ```
-            # Sample 1
-            src : when i was your age , i had a girlfriend .
-            gt  : lorsque j'avais votre age , j'avais une petite amie .
-            pred: lorsque j'avais votre age , j'avais une petite amie .
+* Translated Samples<br>
+    * Model with Attention
+        ```
+        # Sample 1
+        src : when i was your age , i had a girlfriend .
+        gt  : lorsque j'avais votre age , j'avais une petite amie .
+        pred: lorsque j'avais votre age , j'avais une petite amie .
 
 
-            # Sample 2
-            src : he gave me some money .
-            gt  : il me donna un peu d'argent .
-            pred: il me donna un peu d'argent .
+        # Sample 2
+        src : he gave me some money .
+        gt  : il me donna un peu d'argent .
+        pred: il me donna un peu d'argent .
 
 
-            # Sample 3
-            src : please answer all the questions .
-            gt  : repondez a toutes les questions , s'il vous plait .
-            pred: repondez a toutes les questions , s'il vous plait .
+        # Sample 3
+        src : please answer all the questions .
+        gt  : repondez a toutes les questions , s'il vous plait .
+        pred: repondez a toutes les questions , s'il vous plait .
 
-            ```
-            <img src="docs/figs/nmt_GRU_Attn_attention0.jpg" width="32%">
-            <img src="docs/figs/nmt_GRU_Attn_attention1.jpg" width="32%">
-            <img src="docs/figs/nmt_GRU_Attn_attention2.jpg" width="32%"><br><br><br>
+        ```
+        <img src="docs/figs/nmt_GRU_Attn_attention0.jpg" width="32%">
+        <img src="docs/figs/nmt_GRU_Attn_attention1.jpg" width="32%">
+        <img src="docs/figs/nmt_GRU_Attn_attention2.jpg" width="32%"><br><br><br>
 
-        * Scheduled Sampling Model with Attention
-            ```
-            # Sample 1
-            src : i'm in love with you and i want to marry you .
-            gt  : je suis amoureuse de toi et je veux me marier avec toi .
-            pred: je vous amoureux de toi et je veux vous epouser . toi .
-
-
-            # Sample 2
-            src : what's really going one here ?
-            gt  : que se passe-t-il vraiment ici ?
-            pred: que se passe-t-il, ici ?
+    * Scheduled Sampling Model with Attention
+        ```
+        # Sample 1
+        src : i'm in love with you and i want to marry you .
+        gt  : je suis amoureuse de toi et je veux me marier avec toi .
+        pred: je vous amoureux de toi et je veux vous epouser . toi .
 
 
-            # Sample 3
-            src : we do need your advice .
-            gt  : il nous faut ecouter vos conseils .
-            pred: nous nous faut que tes conseils .
-
-            ```
-            <img src="docs/figs/nmt_GRU_Attn_ss_attention0.jpg" width="32%">
-            <img src="docs/figs/nmt_GRU_Attn_ss_attention1.jpg" width="32%">
-            <img src="docs/figs/nmt_GRU_Attn_ss_attention2.jpg" width="32%"><br><br><br>
-
-        * Model without Attention
-            ```
-            # Sample 1
-            src : tom asked mary for some help .
-            gt  : tom a demande a mary de l'aider .
-            pred: tom demande demande a mary de l'aide .
+        # Sample 2
+        src : what's really going one here ?
+        gt  : que se passe-t-il vraiment ici ?
+        pred: que se passe-t-il, ici ?
 
 
-            # Sample 2
-            src : you see what i mean ?
-            gt  : tu vois ce que je veux dire ?
-            pred: tu vois ce que je veux dire ?
+        # Sample 3
+        src : we do need your advice .
+        gt  : il nous faut ecouter vos conseils .
+        pred: nous nous faut que tes conseils .
+
+        ```
+        <img src="docs/figs/nmt_GRU_Attn_ss_attention0.jpg" width="32%">
+        <img src="docs/figs/nmt_GRU_Attn_ss_attention1.jpg" width="32%">
+        <img src="docs/figs/nmt_GRU_Attn_ss_attention2.jpg" width="32%"><br><br><br>
+
+    * Model without Attention
+        ```
+        # Sample 1
+        src : tom asked mary for some help .
+        gt  : tom a demande a mary de l'aider .
+        pred: tom demande demande a mary de l'aide .
 
 
-            # Sample 3
-            src : i haven't talked to you in a while .
-            gt  : je ne t'ai pas parle depuis un bon moment .
-            pred: je n'ai vous pas parle pendant un moment moment .
-
-            ```
-            <br><br>
-
-        * Scheduled Sampling Model without Attention
-            ```
-            # Sample 1
-            src : let's take a little break .
-            gt  : faisons une petite pause .
-            pred: faisons une pause pause .
+        # Sample 2
+        src : you see what i mean ?
+        gt  : tu vois ce que je veux dire ?
+        pred: tu vois ce que je veux dire ?
 
 
-            # Sample 2
-            src : they live on the [UNK] floor of this [UNK] .
-            gt  : ils vivent au [UNK] etage de ces [UNK] .
-            pred: ils vivent au sujet de de ce sujets .
+        # Sample 3
+        src : i haven't talked to you in a while .
+        gt  : je ne t'ai pas parle depuis un bon moment .
+        pred: je n'ai vous pas parle pendant un moment moment .
+
+        ```
+        <br><br>
+
+    * Scheduled Sampling Model without Attention
+        ```
+        # Sample 1
+        src : let's take a little break .
+        gt  : faisons une petite pause .
+        pred: faisons une pause pause .
 
 
-            # Sample 3
-            src : tom doesn't understand why mary is so popular .
-            gt  : tom ne comprend pas pourquoi marie est si populaire .
-            pred: tom ne comprend pas pourquoi mary est si populaire .
+        # Sample 2
+        src : they live on the [UNK] floor of this [UNK] .
+        gt  : ils vivent au [UNK] etage de ces [UNK] .
+        pred: ils vivent au sujet de de ce sujets .
 
-            ```
-            <br><br>
+
+        # Sample 3
+        src : tom doesn't understand why mary is so popular .
+        gt  : tom ne comprend pas pourquoi marie est si populaire .
+        pred: tom ne comprend pas pourquoi mary est si populaire .
+
+        ```
+        <br><br>
 
 
 
