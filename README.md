@@ -116,24 +116,24 @@ Please follow the steps below to train a GRU translator model.
 
 * BLEU-4 Score History<br>
 <img src="docs/figs/bleu4.png" width="80%"><br>
-* Model with Attention: 0.3996
-* Scheduled Sampling Model with Attention: 0.3834
-* Model without Attention: 0.3893
-* Scheduled Sampling Model without Attention: 0.3849<br><br>
+    * Model with Attention: 0.3996
+    * Scheduled Sampling Model with Attention: 0.3834
+    * Model without Attention: 0.3893
+    * Scheduled Sampling Model without Attention: 0.3849<br><br>
 
 * NIST-2 Score History<br>
 <img src="docs/figs/nist2.png" width="80%"><br>
-* Model with Attention: 6.8475
-* Scheduled Sampling Model with Attention: 6.6922
-* Model without Attention: 6.8016
-* Scheduled Sampling Model without Attention: 6.7098<br><br>
+    * Model with Attention: 6.8475
+    * Scheduled Sampling Model with Attention: 6.6922
+    * Model without Attention: 6.8016
+    * Scheduled Sampling Model without Attention: 6.7098<br><br>
 
 * NIST-4 Score History<br>
 <img src="docs/figs/nist4.png" width="80%"><br>
-* Model with Attention: 7.1627
-* Scheduled Sampling Model with Attention: 7.0052
-* Model without Attention: 7.1178
-* Scheduled Sampling Model without Attention: 7.0177<br><br>
+    * Model with Attention: 7.1627
+    * Scheduled Sampling Model with Attention: 7.0052
+    * Model without Attention: 7.1178
+    * Scheduled Sampling Model without Attention: 7.0177<br><br>
 
 ### Translated Samples and Attentions of Each GRU Model
 * Model with Attention
