@@ -10,7 +10,6 @@ If you want to see a model using a different attention mechanism, please refer t
 
 ## Supported Model
 ### Seqeunce-to-Sequence GRU Model
-* English-French 기계 번역 모델 제작을 위해 GRU 기반의 seq2seq 모델을 학습합니다.
 * A GRU using `nn.GRU` is implemented.
 * Bahdanau Attention (You can decide in `config/config.yaml` whether to use attention or not).
 <br><br><br>
@@ -89,28 +88,7 @@ Please follow the steps below to train a GRU translator model.
 <br><br><br>
 
 
-* ### 모델 학습 조건 설정 (config.json)
-    **주의사항: 최초 학습 시 config.json이 사용되며, 이미 한 번 학습을 한 모델에 대하여 parameter를 바꾸고싶다면 base_path/model/{model_name}/{model_name}.json 파일을 수정해야 합니다.**
-    * is_attn: {0, 1} 중 선택. Attention 모델을 제작한다면 1, 아니면 0. 
-    * base_path: 학습 관련 파일이 저장될 위치.
-    * model_name: 학습 모델이 저장될 파일 이름 설정. 모델은 base_path/model/{model_name}/{model_name}.pt 로 저장.
-    * loss_data_name: 학습 시 발생한 loss data를 저장하기 위한 이름 설정. base_path/loss/{loss_data_name}.pkl 파일로 저장. 내부에 중단된 학습을 다시 시작할 때, 학습 과정에 발생한 loss 데이터를 그릴 때 등 필요한 데이터를 dictionary 형태로 저장.
-    * vocab_size: 최대 vocab size 설정.
-    * max_len: 토큰화 된 번역 source, target 데이터의 최대 길이.
-    * hidden_size: GRU 모델의 hidden dimension.
-    * num_layers: GRU 모델의 레이어 수.
-    * dropout: 모델의 dropout 비율.
-    * batch_size: batch size 지정.
-    * epochs: 학습 epoch 설정.
-    * lr: learning rate 지정.
-    * teacher_forcing_ratio: Teacher forcing (교사 강요) 비율. 1일 경우 모든 학습이 teacher forcing으로 이루어짐(e.g. 0.9일 경우 학습의 step마다 10 %의 확률로 scheduled sampling 방식으로 학습이 진행됨). 
-    * result_num: 모델 테스트 시, 결과를 보여주는 sample 개수.
-    * early_stop_criterion: Test set의 최소 loss를 내어준 학습 epoch 대비, 설정된 숫자만큼 epoch이 지나도 나아지지 않을 경우 학습 조기 종료.
-    * visualize_attn: {0, 1} 중 선택. 1이면 랜덤으로 result_num에서 설정해준 개수만큼 랜덤으로 attention score를 가시화하여 {base_path}/result 폴더에 모델 이름으로 이미지 저장.
-    <br><br><br>
-
-
-## 결과
+## Training Results
 * ### Neural Machine Translator GRU 모델별 결과
     아래 loss, score의 결과는 inference의 결과가 아닌 teacher forcing으로 확인한 결과입니다.
     그리고 아래 표기된 결과는 test set에서 가장 낮은 loss를 가진 모델의 점수입니다.
