@@ -8,8 +8,8 @@ Furthermore, the attention in this code is implemented based on [Bahdanau Attent
 If you want to see a model using a different attention mechanism, please refer to the code in the [PyTorch seq2seq tutorial](https://tutorials.pytorch.kr/intermediate/seq2seq_translation_tutorial.html).
 <br><br><br>
 
-## Supported Model
-### Seqeunce-to-Sequence GRU Model
+## Supported Models
+### Seqeunce-to-Sequence GRU Model and Attention
 * A GRU using `nn.GRU` is implemented.
 * Bahdanau Attention (You can decide in `config/config.yaml` whether to use attention or not).
 <br><br><br>
@@ -58,7 +58,7 @@ This repository is structured as follows.
     |   ├── early_stopper.py          <- Early stopper class file
     |   ├── evaluator.py              <- Metric evaluator class file
     |   ├── model_manager.py          
-    |   ├── tatoeba_downloader.py     <- Tatoeba data download file  
+    |   ├── tatoeba_downloader.py     <- Tatoeba data pre-processing file  
     |   └── training_logger.py        <- Training logger class file
     |
     ├── trainer                 
@@ -67,7 +67,7 @@ This repository is structured as follows.
     |
     └── uitls                   
         ├── __init__.py               <- File for initializing the logger, versioning, etc.
-        ├── data_utils.py             <- File defining the custom dataset dataloader
+        ├── data_utils.py             <- File defining the dataset's dataloader
         ├── filesys_utils.py       
         ├── func_utils.py       
         └── training_utils.py     
