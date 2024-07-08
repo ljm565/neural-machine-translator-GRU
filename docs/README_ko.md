@@ -1,93 +1,58 @@
 # Neural Machine Translator GRU
-한국어 버전의 설명은 [여기](./docs/README_ko.md)를 참고하시기 바랍니다.
-
-## Introduction
-We will create a GRU-based machine translation model using the English-French sentence pair data from the Tatoeba Project. This code will allow you to create a machine translation model with or without the use of attention and [scheduled sampling](https://arxiv.org/pdf/1506.03099.pdf).
-For an explanation of the GRU-based machine translation model and its attention mechanism, please refer to [Sequence-to-Sequence (Seq2Seq) 모델과 Attention](https://ljm565.github.io/contents/RNN2.html).
-Furthermore, the attention in this code is implemented based on [Bahdanau Attention](https://arxiv.org/pdf/1409.0473.pdf) and is not related to the [PyTorch seq2seq tutorial](https://tutorials.pytorch.kr/intermediate/seq2seq_translation_tutorial.html).
-If you want to see a model using a different attention mechanism, please refer to the code in the [PyTorch seq2seq tutorial](https://tutorials.pytorch.kr/intermediate/seq2seq_translation_tutorial.html).
+## 설명
+Tatoeba Project의 English-French 문장 쌍 데이터를 사용하여 GRU 기반의 기계 번역 모델을 제작합니다.
+본 코드에서는 attention과 [scheduled sampling](https://arxiv.org/pdf/1506.03099.pdf) 사용 유무 따른 기계 번역 모델을 제작할 수 있습니다.
+GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [Sequence-to-Sequence (Seq2Seq) 모델과 Attention](https://ljm565.github.io/contents/RNN2.html)을 참고하시기 바랍니다.
+또한 본 코드의 attention은 [Bahdanau Attention](https://arxiv.org/pdf/1409.0473.pdf)을 기반으로 구현하였으며, PyTorch의 [seq2seq 튜토리얼](https://tutorials.pytorch.kr/intermediate/seq2seq_translation_tutorial.html)과는 무관합니다.
+다른 attention을 사용한 모델을 보고 싶다면 [seq2seq 튜토리얼](https://tutorials.pytorch.kr/intermediate/seq2seq_translation_tutorial.html) 코드를 참고하시기 바랍니다.
 <br><br><br>
 
-## Supported Model
-### Seqeunce-to-Sequence GRU Model
-* English-French 기계 번역 모델 제작을 위해 GRU 기반의 seq2seq 모델을 학습합니다.
-* A GRU using `nn.GRU` is implemented.
-* Bahdanau Attention (You can decide in `config/config.yaml` whether to use attention or not).
+## 모델 종류
+* ### Seqeunce-to-Sequence GRU Model and Attention
+    English-French 기계 번역 모델 제작을 위해 GRU 기반의 seq2seq 모델을 학습합니다.
 <br><br><br>
 
 
-## Supported Tokenizer
-### Custom Word Tokenizer
-* Tokenization based on words for attention visualization.
+## 토크나이저 종류
+* ### Word Tokenizer
+    단어 기준으로 토큰화(Attention 가시화를 위함).
 <br><br><br>
 
-## Base Dataset
-* Base dataset for tutorial is English-French dataset of [Tatoeba Project](https://www.manythings.org/anki/).
+## 사용 데이터
+* 실험으로 사용하는 데이터는 [Tatoeba Project](https://www.manythings.org/anki/)의 sentence pair 데이터 중, English-French 데이터셋입니다.
 <br><br><br>
 
-## Supported Devices
-* CPU, GPU, multi-GPU (DDP), MPS (for Mac and torch>=1.12.0)
-<br><br><br>
 
-## Quick Start
-```bash
-python3 src/run/train.py --config config/config.yaml --mode train
-```
-<br><br>
+## 사용 방법
+* ### 학습 방법
+    학습을 시작하기 위한 argument는 4가지가 있습니다.<br>
+    * [-d --device] {cpu, gpu}, **필수**: 학습을 cpu, gpu로 할건지 정하는 인자입니다.
+    * [-m --mode] {train, test, inference}, **필수**: 학습을 시작하려면 train, 학습된 모델을 가지고 있어서 loss, BLEU, attention 모델일 경우 sample에 대한 attention score를 보고싶은 경우에는 test로 설정해야합니다(결과는 result 폴더에 생성 됩니다). 번역기를 테스트 해보고싶다면 inference로 설정해야합니다. test, inference 모드를 사용할 경우, [-n, --name] 인자가 **필수**입니다.
+    * [-c --cont] {1}, **선택**: 학습이 중간에 종료가 된 경우 다시 저장된 모델의 체크포인트 부분부터 학습을 시작할 수 있습니다. 이 인자를 사용할 경우 -m train 이어야 합니다. 
+    * [-n --name] {name}, **선택**: 이 인자는 -c 1 혹은 -m {test, inference} 경우 사용합니다.
+    중간에 다시 불러서 학습을 할 경우 모델의 이름을 입력하고, test, inference를 할 경우에도 실험할 모델의 이름을 입력해주어야 합니다(최초 학습시 config.json에서 정한 모델의 이름의 폴더가 형성되고 그 폴더 내부에 모델 및 모델 파라미터가 json 파일로 형성 됩니다).<br><br>
 
-
-## Project Tree
-This repository is structured as follows.
-```
-├── configs                           <- Folder for storing config files
-│   └── *.yaml
-│
-└── src      
-    ├── models
-    |   └── gru_seq2seq.py            <- GRU model file
-    |
-    ├── run                   
-    |   ├── inference.py              <- Trained model live demo execution code
-    |   ├── train.py                  <- Training execution file
-    |   ├── validation.py             <- Trained model evaulation execution file
-    |   └── vis_attention.py          <- Attention visualization code for each word of attention model
-    |
-    ├── tools                   
-    |   ├── tokenizers
-    |   |    └── word_tokenizer.py    <- Word tokenizer file
-    |   |
-    |   ├── early_stopper.py          <- Early stopper class file
-    |   ├── evaluator.py              <- Metric evaluator class file
-    |   ├── model_manager.py          
-    |   ├── tatoeba_downloader.py     <- Tatoeba data download file  
-    |   └── training_logger.py        <- Training logger class file
-    |
-    ├── trainer                 
-    |   ├── build.py                  <- Codes for initializing dataset, dataloader, etc.
-    |   └── trainer.py                <- Class for training, evaluating, and calculating accuracy
-    |
-    └── uitls                   
-        ├── __init__.py               <- File for initializing the logger, versioning, etc.
-        ├── data_utils.py             <- File defining the custom dataset dataloader
-        ├── filesys_utils.py       
-        ├── func_utils.py       
-        └── training_utils.py     
-```
-<br><br>
-
-
-## Tutorials & Documentations
-Please follow the steps below to train a GRU translator model.
-1. [Getting Started](./docs/1_getting_started.md)
-2. [Data Preparation](./docs/2_data_preparation.md)
-3. [Training](./docs/3_trainig.md)
-4. ETC
-   * [Evaluation](./docs/4_model_evaluation.md)
-   * [Attention Visualization](./docs/5_vis_attn.md)
-   * [Live Demo](./docs/6_live_demo.md)
-
-<br><br><br>
-
+    터미널 명령어 예시<br>
+    * 최초 학습 시
+        ```
+        python3 main.py -d cpu -m train
+        ```
+    * 중간에 중단 된 모델 이어서 학습 시
+        <br>주의사항: config.json을 수정해야하는 일이 발생 한다면 base_path/config.json이 아닌, base_path/model/{model_name}/{model_name}.json 파일을 수정해야 합니다.
+        ```
+        python3 main.py -d gpu -m train -c 1 -n {model_name}
+        ```
+    * 최종 학습 된 모델의 test set에 대한 loss, BLEU 등의 결과 및 attention 결과를 가시화할 시
+        <br>주의사항: config.json을 수정해야하는 일이 발생 한다면 base_path/config.json이 아닌, base_path/model/{model_name}/{model_name}.json 파일을 수정해야 수정사항이 반영됩니다.
+        ```
+        python3 main.py -d cpu -m test -n {model_name}
+        ```
+    * 최종 학습 된 모델의 test set에 대한 번역 모델을 테스트할 시
+        <br>주의사항: config.json을 수정해야하는 일이 발생 한다면 base_path/config.json이 아닌, base_path/model/{model_name}/{model_name}.json 파일을 수정해야 수정사항이 반영됩니다.
+        ```
+        python3 main.py -d cpu -m inference -n {model_name}
+        ```
+    <br><br>
 
 * ### 모델 학습 조건 설정 (config.json)
     **주의사항: 최초 학습 시 config.json이 사용되며, 이미 한 번 학습을 한 모델에 대하여 parameter를 바꾸고싶다면 base_path/model/{model_name}/{model_name}.json 파일을 수정해야 합니다.**
