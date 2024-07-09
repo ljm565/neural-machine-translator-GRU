@@ -12,7 +12,7 @@ name: tatoeba
 # model config
 vocab_size: 10000
 max_len: 32
-num_layers: 1              # Number of each residual block's layer. A model consisting of a total of (num_layer * 2 * 3 + 2) layers will be created.
+num_layers: 1            # Number of GRU layers
 hidden_dim: 768
 dropout: 0
 use_attention: True
