@@ -310,7 +310,7 @@ class Trainer:
                     msg = tuple([f'{epoch+1}/{self.epochs}'] + loss_log + [metric_results[k] for k in self.metrics])
                     pbar.set_description(('%15s' + '%15.4g' * (len(loss_log) + len(self.metrics))) % msg)
 
-                    ids = random.sample(range(batch_size), self.config.prediction_print_n)
+                    ids = random.sample(range(batch_size), min(batch_size, self.config.prediction_print_n))
                     for id in ids:
                         print_samples(' '.join(sources[id].split()[1:]), targets4metrics[id], predictions[id])
 
