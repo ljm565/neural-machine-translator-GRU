@@ -21,6 +21,7 @@ GRU 기반 기계 번역 모델과 이 모델의 attention에 대한 설명은 [
 
 ## Base Dataset
 * 실험으로 사용하는 데이터는 [Tatoeba Project](https://www.manythings.org/anki/)의 sentence pair 데이터 중, English-French 데이터셋입니다.
+* Custom 데이터를 사용할 경우, train/validation/test 데이터 경로를 `config/config.yaml`에 설정해야하며, custom tokenizer, dataloader를 구성하여 `src/trainer/build.py`에 코드를 구현해야합니다.
 <br><br><br>
 
 ## Supported Devices

@@ -22,6 +22,7 @@ If you want to see a model using a different attention mechanism, please refer t
 
 ## Base Dataset
 * Base dataset for tutorial is English-French dataset of [Tatoeba Project](https://www.manythings.org/anki/).
+* If you want to use your custom data, you have to set train/validation/test data paths in the `config/config.yaml`. Also, you have to implement your custom tokenizer, data loading parts in the `src/trainer/build.py`.
 <br><br><br>
 
 ## Supported Devices
