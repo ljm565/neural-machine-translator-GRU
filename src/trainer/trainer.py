@@ -112,8 +112,8 @@ class Trainer:
 
         # init ddp
         if self.is_ddp:
-            torch.nn.parallel.DistributedDataParallel(encoder, device_ids=[self.device])
-            torch.nn.parallel.DistributedDataParallel(decoder, device_ids=[self.device])
+            encoder = torch.nn.parallel.DistributedDataParallel(encoder, device_ids=[self.device])
+            decoder = torch.nn.parallel.DistributedDataParallel(decoder, device_ids=[self.device])
         
         return encoder, decoder
 
@@ -282,7 +282,8 @@ class Trainer:
                     targets4metrics = [self.tokenizers[1].decode(t[1:].tolist()) for t in trg]
                     
                     enc_output, hidden = self.encoder(src)
-                    predictions, score, loss = self.decoder.batch_inference(
+                    decoder_module = self.decoder.module if self.is_ddp else self.decoder
+                    predictions, score, loss = decoder_module.batch_inference(
                         start_tokens=trg[:, 0], 
                         enc_output=enc_output,
                         hidden=hidden,
@@ -325,7 +326,8 @@ class Trainer:
                 # upadate logs and save model
                 self.training_logger.update_phase_end(phase, printing=True)
                 if is_training_now:
-                    self.training_logger.save_model(self.wdir, {'encoder': self.encoder, 'decoder': self.decoder})
+                    models = {'encoder': self.encoder.module, 'decoder': self.decoder.module} if self.is_ddp else {'encoder': self.encoder, 'decoder': self.decoder}
+                    self.training_logger.save_model(self.wdir, models)
                     self.training_logger.save_logs(self.save_dir)
 
                     high_fitness = self.training_logger.model_manager.best_higher
